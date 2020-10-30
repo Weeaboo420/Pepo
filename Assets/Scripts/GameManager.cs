@@ -13,9 +13,20 @@ public class GameManager : MonoBehaviour
     private GameObject _titleScreen;
     private GameObject _pauseScreen;
 
+    private PlayerController _playerControllerReference;
+
     private int _lives;
     private Text _livesText;
     private List<Pumpkin> _pumpkins;
+
+    private int _bombPoints = 0; //Can be used to create a bomb that will instantly kill a skeleton that touches it
+    private const int _pointsPerBomb = 5; //How many points are needed to create one bomb
+    private const int _maxBombs = 5; //How many bombs that can be carried at the same time
+    private Text _bombText;
+    private Image _bombControls;
+    private Color32 _defaultControlColor;
+    private Color32 _disabledControlColor = new Color32(19, 53, 92, 255);
+    private GameObject _bombPrefab;
 
     private bool _waterBucketFilled = false;
     private bool _canFillBucket = false;
@@ -38,10 +49,12 @@ public class GameManager : MonoBehaviour
 
     private AudioSource _hitAudioSource;
 
-    private AudioSource _pumpkinSoundSource;
+    private AudioSource[] _pumpkinSoundSources;
     private AudioClip[] _jackLanternSpawnSounds;
 
-    private List<Transform> _paths = new List<Transform>();
+    private AudioSource _explosionAudioSource;
+
+    private List<Path> _paths = new List<Path>();    
 
     private GameObject _dustPrefab;
     private GameObject _hitPrefab;
@@ -64,19 +77,21 @@ public class GameManager : MonoBehaviour
 
     private Dictionary<int, WaveParams> _waveDifficulties = new Dictionary<int, WaveParams>() 
     {
-        {1, new WaveParams(1, 2, 25) },
-        {3, new WaveParams(2, 3, 25) },
-        {5, new WaveParams(2, 4, 25) },
-        {10, new WaveParams(3, 5, 34) },
-        {20, new WaveParams(4, 6, 40) },
-        {25, new WaveParams(5, 7, 45) }
+        {1, new WaveParams(2, 4, 25, 4.2f) },
+        {3, new WaveParams(3, 5, 25, 4.2f) },
+        {5, new WaveParams(4, 6, 25, 4.6f) },
+        {10, new WaveParams(4, 6, 34, 5f) },
+        {20, new WaveParams(6, 8, 40, 5.5f) },
+        {25, new WaveParams(7, 9, 45, 5.7f) },
+        {30, new WaveParams(9, 11, 50, 6.0f) }
     };
     
     private void Awake()
     {
+        //Add paths
         foreach(Transform child in transform)
         {
-            _paths.Add(child);
+            _paths.Add(child.GetComponent<Path>());
         }
 
         _gameOverScreen = GameObject.Find("GameOverScreen");
@@ -90,7 +105,15 @@ public class GameManager : MonoBehaviour
 
         Cursor.lockState = CursorLockMode.Confined;
 
+        _bombText = GameObject.Find("Slot_Bomb").transform.Find("Text").GetComponent<Text>();
+        _bombText.text = _bombPoints.ToString() + "/" + _pointsPerBomb.ToString();
+        _bombPrefab = Resources.Load<GameObject>("Prefabs/BombPrefab");
+        _bombControls = GameObject.Find("Controls_Bomb").GetComponent<Image>();
+        _defaultControlColor = _bombControls.color;
+        _bombControls.color = _disabledControlColor;
+
         _scythe = FindObjectOfType<Scythe>();
+        _playerControllerReference = FindObjectOfType<PlayerController>();
 
         _waveText = GameObject.Find("Slot_Wave").transform.Find("Text").GetComponent<Text>();
         _skeletonText = GameObject.Find("Slot_Wave").transform.Find("Count").GetComponent<Text>();
@@ -131,6 +154,13 @@ public class GameManager : MonoBehaviour
         //Disable the red selection circle used for showing which pumpkin is selected for watering
         _selection.SetActive(false);
 
+        GameObject explosionSoundGameObject = new GameObject("audio_explosion");
+        _explosionAudioSource = explosionSoundGameObject.AddComponent<AudioSource>();
+        _explosionAudioSource.volume = 0.5f;
+        _explosionAudioSource.loop = false;
+        _explosionAudioSource.playOnAwake = false;
+        _explosionAudioSource.clip = Resources.Load<AudioClip>("SFX/bomb");
+
         //Sounds for hits on skeletons
         GameObject hitSoundGameObject = new GameObject("audio_hit_skeleton");
         _hitAudioSource = hitSoundGameObject.AddComponent<AudioSource>();
@@ -154,19 +184,27 @@ public class GameManager : MonoBehaviour
 
 
         //Sounds for the pumpkins
-        GameObject audioPumpkin = new GameObject("audio_pumpkin");
-        _pumpkinSoundSource = audioPumpkin.AddComponent<AudioSource>();
-        _pumpkinSoundSource.playOnAwake = false;
-        _pumpkinSoundSource.loop = false;
+        _pumpkinSoundSources = new AudioSource[4];
 
-        _jackLanternSpawnSounds = new AudioClip[4]
+        for (int i = 0; i < 4; i++)
         {
+            GameObject audioPumpkin = new GameObject("audio_pumpkin");
+            AudioSource pumpkinSoundSource = audioPumpkin.AddComponent<AudioSource>();
+            pumpkinSoundSource.playOnAwake = false;
+            pumpkinSoundSource.loop = false;
+
+
+            _jackLanternSpawnSounds = new AudioClip[4]
+            {
             Resources.Load<AudioClip>("SFX/spawn1"),
             Resources.Load<AudioClip>("SFX/spawn2"),
             Resources.Load<AudioClip>("SFX/spawn3"),
             Resources.Load<AudioClip>("SFX/thud")
-        };
+            };
 
+            _pumpkinSoundSources[i] = pumpkinSoundSource;
+
+        }
         foreach(Pumpkin pumpkin in FindObjectsOfType<Pumpkin>())
         {
             _lives++;
@@ -229,7 +267,9 @@ public class GameManager : MonoBehaviour
             _currentDifficulty = _waveDifficulties[_wave];
         }
 
+        //Wave modifiers
         _scythe.SetDamage(_currentDifficulty.GetScytheDamage());
+        _playerControllerReference.SetSpeed(_currentDifficulty.GetPlayerSpeed());
 
         int skeletonsToSpawn = Random.Range(_currentDifficulty.GetMin(), _currentDifficulty.GetMax() + 1);
         for(int i = 0; i < skeletonsToSpawn; i++)
@@ -273,16 +313,35 @@ public class GameManager : MonoBehaviour
     {
         _lives++;
         UpdateLives();
-    }
+    }    
 
-    public int GetRandomPathIndex()
+    public void IncreaseBombPoints()
     {
-        return Random.Range(0, _paths.Count);
+        _bombPoints++;
+
+        _bombPoints = Mathf.Clamp(_bombPoints, 0, _pointsPerBomb * _maxBombs);
+
+        _bombText.text = _bombPoints.ToString() + "/" + _pointsPerBomb.ToString();
+
+        if(_bombPoints >= _pointsPerBomb)
+        {
+            _bombControls.color = _defaultControlColor;
+        }
     }
 
-    public Transform GetPath(int index)
-    {        
-        return _paths[index];
+    public Path GetPath()
+    {
+        List<Path> validPaths = new List<Path>();
+
+        foreach (Path path in _paths)
+        {            
+            if (path.GetPumpkin().GetStage() != 0)
+            {
+                validPaths.Add(path);
+            }
+        }
+
+        return validPaths[Random.Range(0, validPaths.Count)];
     }
 
     public void CreateDustPrefab(Vector3 position)
@@ -296,16 +355,39 @@ public class GameManager : MonoBehaviour
         _hitAudioSource.Play();
     }
 
+    public void CreateExplosionPrefab(Vector3 position)
+    {
+        Instantiate(_hitPrefab, position, Quaternion.identity);
+        Instantiate(_hitPrefab, position + new Vector3(0.2f, 0.05f, 0f), Quaternion.identity);
+        Instantiate(_hitPrefab, position + new Vector3(-0.1f, 0f, 0f), Quaternion.identity);
+        Instantiate(_hitPrefab, position + new Vector3(-0.15f, -0.2f, 0f), Quaternion.identity);
+        _explosionAudioSource.Play();
+    }
+
     public void PlayLanternSound()
     {
-        _pumpkinSoundSource.clip = _jackLanternSpawnSounds[Random.Range(0, _jackLanternSpawnSounds.Length-1)];
-        _pumpkinSoundSource.Play();
+        foreach (AudioSource audioSource in _pumpkinSoundSources)
+        {
+            if (!audioSource.isPlaying)
+            {
+                audioSource.clip = _jackLanternSpawnSounds[Random.Range(0, _jackLanternSpawnSounds.Length - 1)];
+                audioSource.Play();
+                break;
+            }
+        }
     }
 
     public void PlayThudSound()
-    {
-        _pumpkinSoundSource.clip = _jackLanternSpawnSounds[_jackLanternSpawnSounds.Length - 1];
-        _pumpkinSoundSource.Play();
+    {        
+        foreach (AudioSource audioSource in _pumpkinSoundSources)
+        {
+            if (!audioSource.isPlaying)
+            {
+                audioSource.clip = _jackLanternSpawnSounds[_jackLanternSpawnSounds.Length - 1];
+                audioSource.Play();
+                break;
+            }
+        }
     }
 
     public bool GetCanFillBucket()
@@ -453,15 +535,31 @@ public class GameManager : MonoBehaviour
 
     private void Update()
     {        
+        //Next wave countdown
         if(_countdownActive)
         {
             _nextWaveCountdown -= Time.deltaTime;
             _countdownText.text = Mathf.RoundToInt(_nextWaveCountdown).ToString();
         }
 
+        //Pausing
         if(Input.GetKeyDown(KeyCode.Escape) && _hasStarted)
         {
             TogglePause();
+        }
+
+        //Bomb placement
+        if(Input.GetKeyDown(KeyCode.R) && _bombPoints >= _pointsPerBomb)
+        {
+            _bombPoints -= _pointsPerBomb;
+            _bombText.text = _bombPoints.ToString() + "/" + _pointsPerBomb.ToString();
+            Instantiate(_bombPrefab, _playerControllerReference.transform.position, Quaternion.identity);
+            PlayThudSound();
+
+            if (_bombPoints < _pointsPerBomb)
+            {
+                _bombControls.color = _disabledControlColor;
+            }
         }
 
         //Pumpkin watering

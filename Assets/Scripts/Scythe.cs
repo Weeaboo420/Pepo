@@ -10,6 +10,7 @@ public class Scythe : MonoBehaviour
     private AudioClip _hitSound;    
 
     private PlayerController _playerController;
+    private GameManager _gameManagerReference;
 
     private void Start()
     {
@@ -18,6 +19,7 @@ public class Scythe : MonoBehaviour
         _audioSources = new List<AudioSource>();
 
         _playerController = FindObjectOfType<PlayerController>();
+        _gameManagerReference = FindObjectOfType<GameManager>();
 
         for(int i = 0; i < 5; i++)
         {
@@ -73,7 +75,19 @@ public class Scythe : MonoBehaviour
             if (hit.transform.CompareTag("Skeleton") && hit.collider.isTrigger)
             {
                 Skeleton skeletonScript = hit.transform.GetComponent<Skeleton>();
+
+                bool willDie = false;
+                if(skeletonScript.GetCurrentHealth() - _damage <= 0)
+                {
+                    willDie = true;
+                }
+
                 skeletonScript.TakeDamage(_damage);
+
+                if(willDie)
+                {
+                    _gameManagerReference.IncreaseBombPoints();
+                }
 
                 Instantiate(_hitPrefab, new Vector3(hit.transform.position.x, hit.transform.position.y, transform.position.z - 1), Quaternion.identity);
                 playHitSound = true;

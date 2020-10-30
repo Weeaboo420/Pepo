@@ -20,8 +20,7 @@ public class Skeleton : MonoBehaviour
     private float _speed;
     private const float _depthMultiplier = 0.075f;
     private Rigidbody2D _rigidbody2D;
-
-    private int _pathIndex; //Used to determine what path we get
+    
     private int _nodeIndex = 0; //Used to determine which node on the path we are on
 
     private Path _path;
@@ -40,10 +39,8 @@ public class Skeleton : MonoBehaviour
         _rigidbody2D = GetComponent<Rigidbody2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
         _animator = GetComponent<Animator>();
-
-        _pathIndex = _gameManagerReference.GetRandomPathIndex();
-
-        _path = _gameManagerReference.GetPath(_pathIndex).GetComponent<Path>();
+        
+        _path = _gameManagerReference.GetPath();
 
         //Set the position to be the first node in the path
         transform.position = new Vector3(_path.GetNodes()[_nodeIndex].x, _path.GetNodes()[_nodeIndex].y, transform.position.z);
@@ -149,7 +146,7 @@ public class Skeleton : MonoBehaviour
             }
         }
 
-        yield return new WaitForSeconds(Random.Range(0.7f, 1.1f));
+        yield return new WaitForSeconds(Random.Range(0.9f, 1.6f));
         _canAttack = true;
     }
 

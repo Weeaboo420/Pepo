@@ -9,7 +9,7 @@ public enum Direction
 
 public class PlayerController : MonoBehaviour
 {
-    private const float _speed = 4.2f;
+    private float _speed = 4.2f;
     private const float _depthMultiplier = 0.075f;
     private Vector2 _scytheOffset = new Vector2(1.3f, 0.15f);
 
@@ -46,6 +46,18 @@ public class PlayerController : MonoBehaviour
 
         _minBounds = new Vector2(-9f, -15f);
         _maxBounds = new Vector2(13f, 5f);
+    }
+
+    public void SetSpeed(float newSpeed)
+    {
+        _speed = newSpeed;
+
+        if(_playerAnimator == null)
+        {
+            _playerAnimator = GetComponent<Animator>();
+        }
+
+        _playerAnimator.speed = (float)System.Math.Round(_speed / 4.2, 2);
     }
 
     private void SetDirection(Direction newDirection)
