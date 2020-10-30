@@ -75,7 +75,7 @@ public class Skeleton : MonoBehaviour
     private IEnumerator StartDelay()
     {
         yield return new WaitForSeconds(Random.Range(0.9f, 3f));
-        _speed = Random.Range(1.7f, 2.25f);
+        _speed = Random.Range(2.3f, 3.1f);
         _canMove = true;
     }
 
@@ -149,7 +149,7 @@ public class Skeleton : MonoBehaviour
             }
         }
 
-        yield return new WaitForSeconds(Random.Range(0.7f, 1.5f));
+        yield return new WaitForSeconds(Random.Range(0.7f, 1.1f));
         _canAttack = true;
     }
 
