@@ -60,7 +60,7 @@ public class Scythe : MonoBehaviour
     {
         bool playHitSound = false;
 
-        float hitboxOffset = 0.2f;
+        float hitboxOffset = 0.1f;
 
         if(_playerController.GetScytheDirection() == Direction.Left)
         {
@@ -68,7 +68,7 @@ public class Scythe : MonoBehaviour
         }
 
         //Check for multiple hits. With this the player can hit multiple targets in one swing.
-        RaycastHit2D[] hits = Physics2D.BoxCastAll(transform.position + new Vector3(hitboxOffset, 0, 0), new Vector2(0.75f, 1.2f), 0f, Vector2.zero);
+        RaycastHit2D[] hits = Physics2D.BoxCastAll(transform.position + new Vector3(hitboxOffset, 0, 0), new Vector2(1.4f, 1.2f), 0f, Vector2.zero);
 
         foreach (RaycastHit2D hit in hits)
         {

@@ -8,6 +8,8 @@ public class Skeleton : MonoBehaviour
     private int _maxHealth = 100;
     private int _currentHealth;
 
+    public bool _isSuperSkeleton = false;    
+
     private Vector3 _newScale;
     private GameObject _healthBar, _background;
 
@@ -32,9 +34,6 @@ public class Skeleton : MonoBehaviour
 
     private void Start()
     {
-        _currentHealth = Random.Range(55, _maxHealth);
-        _maxHealth = _currentHealth;
-
         _gameManagerReference = FindObjectOfType<GameManager>();
         _rigidbody2D = GetComponent<Rigidbody2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
@@ -65,6 +64,18 @@ public class Skeleton : MonoBehaviour
         backgroundSpriteRenderer.sprite = Resources.Load<Sprite>("Sprites/Level/Box");
         backgroundSpriteRenderer.color = new Color32(108, 109, 28, 255);
 
+        if (!_isSuperSkeleton)
+        {
+            _currentHealth = Random.Range(55, _maxHealth);
+            _maxHealth = _currentHealth;
+        }
+        else
+        {
+            _maxHealth = 300;
+            _currentHealth = _maxHealth;
+            transform.localScale = new Vector3(1.1f, 1.1f, 1f);
+        }
+
         UpdateHealthBar();
         StartCoroutine(StartDelay());
     }
@@ -72,7 +83,15 @@ public class Skeleton : MonoBehaviour
     private IEnumerator StartDelay()
     {
         yield return new WaitForSeconds(Random.Range(0.9f, 3f));
-        _speed = Random.Range(2.3f, 3.1f);
+        
+        if (!_isSuperSkeleton)
+        {
+            _speed = Random.Range(2f, 2.5f);
+        } else
+        {
+            _speed = 1.7f;
+        }
+
         _canMove = true;
     }
 
@@ -111,7 +130,11 @@ public class Skeleton : MonoBehaviour
             Destroy(this.gameObject);
         }
 
-        _animator.SetTrigger("FlashTrigger");
+        if (!_isSuperSkeleton)
+        {
+            _animator.SetTrigger("FlashTrigger");
+        }
+
         UpdateHealthBar();        
     }    
 
@@ -129,7 +152,14 @@ public class Skeleton : MonoBehaviour
                 if (pumpkinScript.GetStage() > 0)
                 {
                     pumpkinScript.SetBarVisibility(true);
-                    pumpkinScript.SetWaterValue(pumpkinScript.GetWaterValue() - 1);
+
+                    if (!_isSuperSkeleton)
+                    {
+                        pumpkinScript.SetWaterValue(pumpkinScript.GetWaterValue() - 1);
+                    } else
+                    {
+                        pumpkinScript.SetWaterValue(-1);
+                    }
 
                     _gameManagerReference.CreateHitPrefab(new Vector3(hit.transform.position.x, hit.transform.position.y, transform.position.z - 1f));
 

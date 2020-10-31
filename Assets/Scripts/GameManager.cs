@@ -20,8 +20,8 @@ public class GameManager : MonoBehaviour
     private List<Pumpkin> _pumpkins;
 
     private int _bombPoints = 0; //Can be used to create a bomb that will instantly kill a skeleton that touches it
-    private const int _pointsPerBomb = 5; //How many points are needed to create one bomb
-    private const int _maxBombs = 5; //How many bombs that can be carried at the same time
+    private const int _pointsPerBomb = 7; //How many points are needed to create one bomb
+    private const int _maxBombs = 3; //How many bombs that can be carried at the same time
     private Text _bombText;
     private Image _bombControls;
     private Color32 _defaultControlColor;
@@ -66,24 +66,28 @@ public class GameManager : MonoBehaviour
     private WaveParams _currentDifficulty;
     private List<Skeleton> _skeletonsInWave = new List<Skeleton>();
     private GameObject _skeletonPrefab;
+    private GameObject _superSkeletonPrefab;
 
     private Scythe _scythe;
 
     private const int _countdownLength = 10;
     private float _nextWaveCountdown = _countdownLength;
-    private GameObject _countdownGameobject;
+    private GameObject _countdownGameObject;
     private Text _countdownText;
     private bool _countdownActive = false;
 
     private Dictionary<int, WaveParams> _waveDifficulties = new Dictionary<int, WaveParams>() 
     {
-        {1, new WaveParams(2, 4, 25, 4.2f) },
-        {3, new WaveParams(3, 5, 25, 4.2f) },
-        {5, new WaveParams(4, 6, 25, 4.6f) },
-        {10, new WaveParams(4, 6, 34, 5f) },
-        {20, new WaveParams(6, 8, 40, 5.5f) },
-        {25, new WaveParams(7, 9, 45, 5.7f) },
-        {30, new WaveParams(9, 11, 50, 6.0f) }
+        {1, new WaveParams(3, 4, 25, 4.2f) },
+        {3, new WaveParams(5, 6, 25, 4.2f) },
+        {5, new WaveParams(5, 7, 25, 4.6f, 1) },
+        {6, new WaveParams(6, 7, 25, 4.6f) },
+        {10, new WaveParams(6, 8, 34, 5f, 2) },
+        {11, new WaveParams(6, 9, 34, 5f) },
+        {20, new WaveParams(7, 9, 40, 5.5f, 2) },
+        {21, new WaveParams(8, 9, 40, 5.5f) },
+        {25, new WaveParams(9, 11, 45, 5.7f, 2) },
+        {30, new WaveParams(10, 12, 50, 6.0f, 3) }
     };
     
     private void Awake()
@@ -118,13 +122,14 @@ public class GameManager : MonoBehaviour
         _waveText = GameObject.Find("Slot_Wave").transform.Find("Text").GetComponent<Text>();
         _skeletonText = GameObject.Find("Slot_Wave").transform.Find("Count").GetComponent<Text>();
 
-        _countdownGameobject = GameObject.Find("Slot_Countdown");
-        _countdownText = _countdownGameobject.transform.Find("Text").GetComponent<Text>();
+        _countdownGameObject = GameObject.Find("Slot_Countdown");
+        _countdownText = _countdownGameObject.transform.Find("Text").GetComponent<Text>();
 
         _livesText = GameObject.Find("Slot_Hearts").transform.Find("Text").GetComponent<Text>();
         _pumpkins = new List<Pumpkin>();
 
         _skeletonPrefab = Resources.Load<GameObject>("Prefabs/SkeletonPrefab");
+        _superSkeletonPrefab = Resources.Load<GameObject>("Prefabs/SuperSkeletonPrefab");
 
         _filledBucketSprite = Resources.Load<Sprite>("Sprites/Misc/bucket_filled");
         _emptyBucketSprite = Resources.Load<Sprite>("Sprites/Misc/bucket_empty");
@@ -210,7 +215,7 @@ public class GameManager : MonoBehaviour
             _lives++;
         }
 
-        _countdownGameobject.SetActive(false);
+        _countdownGameObject.SetActive(false);
         UpdateLives();
         StartCoroutine(NewWave());
     }
@@ -259,7 +264,7 @@ public class GameManager : MonoBehaviour
     public IEnumerator NewWave()
     {
         _wave++;
-        _countdownGameobject.SetActive(false);
+        _countdownGameObject.SetActive(false);
 
         //Set the appropriate difficulty depending on the wave;
         if (_waveDifficulties.ContainsKey(_wave))
@@ -271,14 +276,24 @@ public class GameManager : MonoBehaviour
         _scythe.SetDamage(_currentDifficulty.GetScytheDamage());
         _playerControllerReference.SetSpeed(_currentDifficulty.GetPlayerSpeed());
 
+        //Regular skeletons
         int skeletonsToSpawn = Random.Range(_currentDifficulty.GetMin(), _currentDifficulty.GetMax() + 1);
         for(int i = 0; i < skeletonsToSpawn; i++)
         {
             Instantiate(_skeletonPrefab, new Vector3(-100, -100, 0), Quaternion.identity);
         }
 
+        //Super skeletons
+        if (_currentDifficulty.GetSuperSkeletonCount() > 0)
+        {
+            for (int supers = 0; supers < _currentDifficulty.GetSuperSkeletonCount(); supers++)
+            {
+                Instantiate(_superSkeletonPrefab, new Vector3(-100, -100, 0), Quaternion.identity);
+            }
+        }
+
         yield return new WaitForSeconds(1f);
-        foreach(Skeleton skeletonScript in FindObjectsOfType<Skeleton>())
+        foreach (Skeleton skeletonScript in FindObjectsOfType<Skeleton>())
         {
             _skeletonsInWave.Add(skeletonScript);
         }
@@ -481,7 +496,7 @@ public class GameManager : MonoBehaviour
         _waveActive = false;
 
         _nextWaveCountdown = _countdownLength;
-        _countdownGameobject.SetActive(true);
+        _countdownGameObject.SetActive(true);
         _countdownActive = true;
 
         yield return new WaitForSeconds(_countdownLength);
