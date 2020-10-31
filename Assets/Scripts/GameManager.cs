@@ -4,7 +4,6 @@ using System.Collections;
 using UnityEngine.UI;
 using UnityEngine;
 
-
 public class GameManager : MonoBehaviour
 {
     private bool _paused = true;
@@ -218,6 +217,20 @@ public class GameManager : MonoBehaviour
         _countdownGameObject.SetActive(false);
         UpdateLives();
         StartCoroutine(NewWave());
+    }
+
+    private void Start()
+    {
+        //Set the correct z position of all the trees
+        foreach(GameObject tree in GameObject.FindGameObjectsWithTag("Tree"))
+        {
+            tree.transform.position = new Vector3(tree.transform.position.x, tree.transform.position.y, (tree.transform.position.y * 0.075f) + 11);
+        }
+
+        foreach (GameObject tallGrass in GameObject.FindGameObjectsWithTag("Tallgrass"))
+        {
+            tallGrass.transform.position = new Vector3(tallGrass.transform.position.x, tallGrass.transform.position.y, (tallGrass.transform.position.y * 0.075f) + 11);
+        }
     }
 
     public bool GetPaused()

@@ -7,6 +7,9 @@ TagManager:
   - Well
   - Pumpkin
   - Skeleton
+  - Tree
+  - Fence
+  - Tallgrass
   layers:
   - Default
   - TransparentFX
