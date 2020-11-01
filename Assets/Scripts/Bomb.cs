@@ -3,6 +3,8 @@
 public class Bomb : MonoBehaviour
 {
     private GameManager _gameManagerReference;
+    private int _hits = 0;
+    private const int _maxHits = 3;
     private bool _hasExploded = false;
 
     private void Start()
@@ -21,8 +23,14 @@ public class Bomb : MonoBehaviour
                 _gameManagerReference.IncreaseBombPoints();
             }
 
-            collision.GetComponent<Skeleton>().TakeDamage(150);
-            _gameManagerReference.CreateExplosionPrefab(new Vector3(transform.position.x, transform.position.y, transform.position.z - 1f));            
+            //The bomb can only kill so many skeletons when it explodes.
+            if (_hits < _maxHits)
+            {
+                collision.GetComponent<Skeleton>().TakeDamage(110);
+                _gameManagerReference.CreateExplosionPrefab(new Vector3(transform.position.x, transform.position.y, transform.position.z - 1f));
+                _hits++;
+            }            
+
             Destroy(this.gameObject);
         }
     }

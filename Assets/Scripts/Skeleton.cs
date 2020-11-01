@@ -5,10 +5,10 @@ using UnityEngine;
 [RequireComponent(typeof(BoxCollider2D))]
 public class Skeleton : MonoBehaviour
 {
+    public bool _isSuperSkeleton = false;
+
     private int _maxHealth = 100;
     private int _currentHealth;
-
-    public bool _isSuperSkeleton = false;    
 
     private Vector3 _newScale;
     private GameObject _healthBar, _background;
@@ -20,6 +20,8 @@ public class Skeleton : MonoBehaviour
 
     private Vector2 _nextNode;
     private float _speed;
+    private float _previousSpeed;
+    private bool _isSlowed = false;
     private const float _depthMultiplier = 0.075f;
     private Rigidbody2D _rigidbody2D;
     
@@ -83,6 +85,27 @@ public class Skeleton : MonoBehaviour
     public void PlayFootstepSound()
     {
         _gameManagerReference.PlayFootstepSound(true);
+    }
+
+    public void AddSlowedEffect()
+    {
+        //Only regular skeletons can be slowed down by puddles
+        if (!_isSlowed && !_isSuperSkeleton)
+        {
+            _previousSpeed = _speed;
+            _speed = _speed * 0.58f;
+            _isSlowed = true;
+        }
+    }
+
+    public void RemoveSlowedEffect()
+    {
+        if (_isSlowed)
+        {
+            _speed = _previousSpeed;
+            _previousSpeed = 0f;
+            _isSlowed = false;
+        }
     }
 
     private IEnumerator StartDelay()

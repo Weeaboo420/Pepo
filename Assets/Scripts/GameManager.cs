@@ -31,10 +31,14 @@ public class GameManager : MonoBehaviour
     private bool _canFillBucket = false;
     private bool _canWater = false;
 
+    private GameObject _messagePrefab;
+    private GameObject _guiRoot;
+
     private Sprite _filledBucketSprite, _emptyBucketSprite;
     private Color32 _emptyBucketSlotColor, _filledBucketSlotColor;    
     private Image _bucketSlotImage, _bucketImage;
-    public GameObject _fillBucketPrompt;
+    private GameObject _fillBucketPrompt;
+    private Image _bucketControls;
 
     private GameObject _waterPumpkinPrompt;
     private GameObject _selection;
@@ -70,6 +74,8 @@ public class GameManager : MonoBehaviour
     private GameObject _skeletonPrefab;
     private GameObject _superSkeletonPrefab;
 
+    private GameObject _puddlePrefab;         
+
     private Scythe _scythe;
 
     private const int _countdownLength = 15;
@@ -80,16 +86,18 @@ public class GameManager : MonoBehaviour
 
     private Dictionary<int, WaveParams> _waveDifficulties = new Dictionary<int, WaveParams>() 
     {
-        {1, new WaveParams(3, 4, 25, 4.2f) },
-        {3, new WaveParams(5, 6, 25, 4.2f) },
-        {5, new WaveParams(5, 7, 25, 4.6f, 1) },
-        {6, new WaveParams(6, 7, 25, 4.6f) },
-        {10, new WaveParams(6, 8, 34, 5f, 2) },
-        {11, new WaveParams(6, 9, 34, 5f) },
-        {20, new WaveParams(7, 9, 40, 5.5f, 2) },
-        {21, new WaveParams(8, 9, 40, 5.5f) },
-        {25, new WaveParams(9, 11, 45, 5.7f, 2) },
-        {30, new WaveParams(10, 12, 50, 6.0f, 3) }
+        {1, new WaveParams(4, 5, 20, 4.2f, "Defend the pumpkins") },
+        {3, new WaveParams(5, 6, 20, 4.2f) },
+        {5, new WaveParams(5, 7, 20, 4.6f, "Speed upgrade", 1) },
+        {6, new WaveParams(6, 7, 30, 4.6f, "Damage upgrade") },
+        {10, new WaveParams(8, 10, 30, 5f, "Speed upgrade", 2) },
+        {11, new WaveParams(8, 11, 35, 5f) },
+        {15, new WaveParams(9, 11, 40, 5f, "Damage upgrade", 2) },
+        {16, new WaveParams(9, 10, 40, 5.5f, "Speed upgrade") },
+        {20, new WaveParams(10, 12, 45, 5.5f, "Damage upgrade", 2) },
+        {21, new WaveParams(10, 13, 45, 5.5f) },
+        {25, new WaveParams(12, 15, 50, 5.7f, "Speed & damage upgrade", 3) },
+        {30, new WaveParams(12, 14, 55, 6.0f, "Speed & damage upgrade", 4) }
     };
     
     private void Awake()
@@ -118,6 +126,9 @@ public class GameManager : MonoBehaviour
         _defaultControlColor = _bombControls.color;
         _bombControls.color = _disabledControlColor;
 
+        _messagePrefab = Resources.Load<GameObject>("Prefabs/MessagePrefab");
+        _guiRoot = GameObject.Find("UI");
+
         _scythe = FindObjectOfType<Scythe>();
         _playerControllerReference = FindObjectOfType<PlayerController>();
 
@@ -133,10 +144,14 @@ public class GameManager : MonoBehaviour
         _skeletonPrefab = Resources.Load<GameObject>("Prefabs/SkeletonPrefab");
         _superSkeletonPrefab = Resources.Load<GameObject>("Prefabs/SuperSkeletonPrefab");
 
+        _puddlePrefab = Resources.Load<GameObject>("Prefabs/PuddlePrefab");
+
         _filledBucketSprite = Resources.Load<Sprite>("Sprites/Misc/bucket_filled");
         _emptyBucketSprite = Resources.Load<Sprite>("Sprites/Misc/bucket_empty");
         _bucketSlotImage = GameObject.Find("Slot_Bucket").GetComponent<Image>();
         _bucketImage = GameObject.Find("Slot_Bucket").transform.Find("Bucket").GetComponent<Image>();
+        _bucketControls = GameObject.Find("Controls_Bucket").GetComponent<Image>();
+        _bucketControls.color = _disabledControlColor;
 
         _splashPrefab = Resources.Load<GameObject>("Prefabs/SplashPrefab");
         _wellTransform = GameObject.Find("WELL").transform;
@@ -240,6 +255,13 @@ public class GameManager : MonoBehaviour
         StartCoroutine(NewWave());
     }
 
+    private void ShowMesssage(string message)
+    {
+        GameObject newMessage = (GameObject)Instantiate(_messagePrefab, _guiRoot.transform);
+        newMessage.transform.SetAsFirstSibling();
+        newMessage.transform.Find("Text").GetComponent<Text>().text = message;
+    }
+
     private void Start()
     {
         //Set the correct z position of all the trees
@@ -304,6 +326,12 @@ public class GameManager : MonoBehaviour
         if (_waveDifficulties.ContainsKey(_wave))
         {
             _currentDifficulty = _waveDifficulties[_wave];
+
+            //Show a message for a particular wave
+            if(_currentDifficulty.GetMessage().Length > 0)
+            {
+                ShowMesssage(_currentDifficulty.GetMessage());
+            }
         }
 
         //Wave modifiers
@@ -534,10 +562,12 @@ public class GameManager : MonoBehaviour
         {
             _bucketImage.sprite = _filledBucketSprite;
             _bucketSlotImage.color = _filledBucketSlotColor;
-            _fillBucketPrompt.SetActive(false);            
+            _bucketControls.color = _defaultControlColor;
+            _fillBucketPrompt.SetActive(false);
         }
         else
         {
+            _bucketControls.color = _disabledControlColor;
             _bucketImage.sprite = _emptyBucketSprite;
             _bucketSlotImage.color = _emptyBucketSlotColor;
         }
@@ -618,7 +648,7 @@ public class GameManager : MonoBehaviour
         if(Input.GetKeyDown(KeyCode.Escape) && _hasStarted)
         {
             TogglePause();
-        }
+        }        
 
         //Bomb placement
         if(Input.GetKeyDown(KeyCode.R) && _bombPoints >= _pointsPerBomb)
@@ -634,8 +664,17 @@ public class GameManager : MonoBehaviour
             }
         }
 
+        //Puddles
+        if(Input.GetKeyDown(KeyCode.E) && _waterBucketFilled && _selectedPumpkin == null && !_canFillBucket)
+        {
+            Instantiate(_puddlePrefab, _playerControllerReference.transform.position - new Vector3(0, 0.6f, 0), Quaternion.identity);
+            Instantiate(_splashPrefab, _playerControllerReference.transform.position - new Vector3(0, 0.6f, 0), Quaternion.identity);
+            _waterBucketFilled = false;
+            UpdateWaterBucket(false);
+        }
+
         //Pumpkin watering
-        if(Input.GetKeyDown(KeyCode.E) && _canWater && _selectedPumpkin != null && _waterBucketFilled && !_canFillBucket)
+        else if(Input.GetKeyDown(KeyCode.E) && _canWater && _selectedPumpkin != null && _waterBucketFilled && !_canFillBucket)
         {
 
             //Prevent the player from wasting a bucket on a pumpkin that is a jack o'lantern and that has a full water bar

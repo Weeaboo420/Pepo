@@ -67,8 +67,9 @@ public class Scythe : MonoBehaviour
             hitboxOffset = -hitboxOffset;
         }
 
-        //Check for multiple hits. With this the player can hit multiple targets in one swing.
+        //Check for multiple hits.
         RaycastHit2D[] hits = Physics2D.BoxCastAll(transform.position + new Vector3(hitboxOffset, 0, 0), new Vector2(1.4f, 1.2f), 0f, Vector2.zero);
+        int attacks = 0, maxAttacks = 2;
 
         foreach (RaycastHit2D hit in hits)
         {
@@ -91,6 +92,13 @@ public class Scythe : MonoBehaviour
 
                 Instantiate(_hitPrefab, new Vector3(hit.transform.position.x, hit.transform.position.y, transform.position.z - 1), Quaternion.identity);
                 playHitSound = true;
+                attacks++;
+
+                //The player can only attack so many skeletons with one swing.
+                if(attacks >= maxAttacks)
+                {
+                    break;
+                }
             }
         }
 

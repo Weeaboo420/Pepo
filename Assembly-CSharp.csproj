@@ -68,6 +68,7 @@
     <Compile Include="Assets\Scripts\GameManager.cs" />
     <Compile Include="Assets\Scripts\Path.cs" />
     <Compile Include="Assets\Scripts\PlayerController.cs" />
+    <Compile Include="Assets\Scripts\Puddle.cs" />
     <Compile Include="Assets\Scripts\Pumpkin.cs" />
     <Compile Include="Assets\Scripts\Scythe.cs" />
     <Compile Include="Assets\Scripts\SelfDestruct.cs" />

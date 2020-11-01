@@ -4,14 +4,20 @@
     private int _scytheDamage;
     private float _playerSpeed;
     private int _superSkeletons;
-
-    public WaveParams(int min, int max, int scytheDamage, float playerSpeed, int superSkeletons = 0)
+    private string _message;
+    public WaveParams(int min, int max, int scytheDamage, float playerSpeed, string message = "", int superSkeletons = 0)
     {
         _min = min;
         _max = max;
         _scytheDamage = scytheDamage;
         _playerSpeed = playerSpeed;
         _superSkeletons = superSkeletons;
+        _message = message;
+    }
+
+    public string GetMessage()
+    {
+        return _message;
     }
 
     public int GetSuperSkeletonCount()
