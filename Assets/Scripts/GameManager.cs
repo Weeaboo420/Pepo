@@ -46,6 +46,9 @@ public class GameManager : MonoBehaviour
     private AudioSource _bucketSoundSource;
     private AudioClip[] _bucketRefillSounds;
 
+    private AudioSource[] _stepSoundSources;
+    private AudioClip[] _stepSounds;
+
     private AudioSource _hitAudioSource;
 
     private AudioSource[] _pumpkinSoundSources;
@@ -69,7 +72,7 @@ public class GameManager : MonoBehaviour
 
     private Scythe _scythe;
 
-    private const int _countdownLength = 10;
+    private const int _countdownLength = 15;
     private float _nextWaveCountdown = _countdownLength;
     private GameObject _countdownGameObject;
     private Text _countdownText;
@@ -173,6 +176,25 @@ public class GameManager : MonoBehaviour
         _hitAudioSource.playOnAwake = false;
         _hitAudioSource.loop = false;
 
+        //Footstep sounds
+        _stepSoundSources = new AudioSource[4];
+        for(int i = 0; i < 4; i++)
+        {
+            GameObject stepSoundSourceGameObject = new GameObject("audio_step");
+            _stepSoundSources[i] = stepSoundSourceGameObject.AddComponent<AudioSource>();
+            _stepSoundSources[i].volume = 0.8f;
+            _stepSoundSources[i].playOnAwake = false;
+            _stepSoundSources[i].loop = false;
+        }
+
+        _stepSounds = new AudioClip[4]
+        {
+            Resources.Load<AudioClip>("SFX/Steps/step1"),
+            Resources.Load<AudioClip>("SFX/Steps/step2"),
+            Resources.Load<AudioClip>("SFX/Steps/step3"),
+            Resources.Load<AudioClip>("SFX/Steps/step4"),
+        };
+
         //Sounds for the bucket
         GameObject bucketSoundGameObject = new GameObject("audio_bucketRefill");
         _bucketSoundSource = bucketSoundGameObject.AddComponent<AudioSource>();
@@ -181,11 +203,10 @@ public class GameManager : MonoBehaviour
 
         _bucketRefillSounds = new AudioClip[3] 
         { 
-            Resources.Load<AudioClip>("SFX/splash01"),
-            Resources.Load<AudioClip>("SFX/splash02"),
-            Resources.Load<AudioClip>("SFX/splash03")
+            Resources.Load<AudioClip>("SFX/Splashes/splash01"),
+            Resources.Load<AudioClip>("SFX/Splashes/splash02"),
+            Resources.Load<AudioClip>("SFX/Splashes/splash03")
         };
-
 
         //Sounds for the pumpkins
         _pumpkinSoundSources = new AudioSource[4];
@@ -200,9 +221,9 @@ public class GameManager : MonoBehaviour
 
             _jackLanternSpawnSounds = new AudioClip[4]
             {
-            Resources.Load<AudioClip>("SFX/spawn1"),
-            Resources.Load<AudioClip>("SFX/spawn2"),
-            Resources.Load<AudioClip>("SFX/spawn3"),
+            Resources.Load<AudioClip>("SFX/Spawn/spawn1"),
+            Resources.Load<AudioClip>("SFX/Spawn/spawn2"),
+            Resources.Load<AudioClip>("SFX/Spawn/spawn3"),
             Resources.Load<AudioClip>("SFX/thud")
             };
 
@@ -390,6 +411,29 @@ public class GameManager : MonoBehaviour
         Instantiate(_hitPrefab, position + new Vector3(-0.1f, 0f, 0f), Quaternion.identity);
         Instantiate(_hitPrefab, position + new Vector3(-0.15f, -0.2f, 0f), Quaternion.identity);
         _explosionAudioSource.Play();
+    }
+
+    public void PlayFootstepSound(bool forSkeleton = false)
+    {
+        foreach (AudioSource stepSoundSource in _stepSoundSources)
+        {
+            if (!stepSoundSource.isPlaying)
+            {
+                stepSoundSource.clip = _stepSounds[Random.Range(0, _stepSounds.Length)];
+
+                if(forSkeleton)
+                {
+                    stepSoundSource.volume = 0.4f;
+                } else
+                {
+                    stepSoundSource.volume = 0.7f;
+                }
+
+                stepSoundSource.Play();
+                break;
+            }
+        }
+
     }
 
     public void PlayLanternSound()

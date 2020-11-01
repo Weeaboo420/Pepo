@@ -71,7 +71,7 @@ public class Skeleton : MonoBehaviour
         }
         else
         {
-            _maxHealth = 300;
+            _maxHealth = 240;
             _currentHealth = _maxHealth;
             transform.localScale = new Vector3(1.1f, 1.1f, 1f);
         }
@@ -80,16 +80,21 @@ public class Skeleton : MonoBehaviour
         StartCoroutine(StartDelay());
     }
 
+    public void PlayFootstepSound()
+    {
+        _gameManagerReference.PlayFootstepSound(true);
+    }
+
     private IEnumerator StartDelay()
     {
         yield return new WaitForSeconds(Random.Range(0.9f, 3f));
         
         if (!_isSuperSkeleton)
         {
-            _speed = Random.Range(2f, 2.5f);
+            _speed = Random.Range(1.8f, 2.35f);
         } else
         {
-            _speed = 1.7f;
+            _speed = 1.4f;
         }
 
         _canMove = true;
@@ -158,7 +163,7 @@ public class Skeleton : MonoBehaviour
                         pumpkinScript.SetWaterValue(pumpkinScript.GetWaterValue() - 1);
                     } else
                     {
-                        pumpkinScript.SetWaterValue(-1);
+                        pumpkinScript.SetWaterValue(pumpkinScript.GetWaterValue() - 3);
                     }
 
                     _gameManagerReference.CreateHitPrefab(new Vector3(hit.transform.position.x, hit.transform.position.y, transform.position.z - 1f));
@@ -176,7 +181,13 @@ public class Skeleton : MonoBehaviour
             }
         }
 
-        yield return new WaitForSeconds(Random.Range(0.9f, 1.6f));
+        if (!_isSuperSkeleton)
+        {
+            yield return new WaitForSeconds(1);
+        } else
+        {
+            yield return new WaitForSeconds(2);
+        }
         _canAttack = true;
     }
 

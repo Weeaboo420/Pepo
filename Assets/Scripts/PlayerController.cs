@@ -57,7 +57,12 @@ public class PlayerController : MonoBehaviour
             _playerAnimator = GetComponent<Animator>();
         }
 
-        _playerAnimator.speed = (float)System.Math.Round(_speed / 4.2, 2);
+        _playerAnimator.speed = (float)System.Math.Round(_speed / 4, 2);
+    }
+
+    public void PlayFootstepSound()
+    {
+        _gameManagerReference.PlayFootstepSound();
     }
 
     private void SetDirection(Direction newDirection)
