@@ -34,6 +34,8 @@ public class GameManager : MonoBehaviour
     private GameObject _messagePrefab;
     private GameObject _guiRoot;
 
+    private Image _dashSlot;
+
     private Sprite _filledBucketSprite, _emptyBucketSprite;
     private Color32 _emptyBucketSlotColor, _filledBucketSlotColor;    
     private Image _bucketSlotImage, _bucketImage;
@@ -88,16 +90,16 @@ public class GameManager : MonoBehaviour
     {
         {1, new WaveParams(4, 5, 20, 4.2f, "Defend the pumpkins") },
         {3, new WaveParams(5, 6, 20, 4.2f) },
-        {5, new WaveParams(5, 7, 20, 4.6f, "Speed upgrade", 1) },
-        {6, new WaveParams(6, 7, 30, 4.6f, "Damage upgrade") },
-        {10, new WaveParams(8, 10, 30, 5f, "Speed upgrade", 2) },
-        {11, new WaveParams(8, 11, 35, 5f) },
-        {15, new WaveParams(9, 11, 40, 5f, "Damage upgrade", 2) },
-        {16, new WaveParams(9, 10, 40, 5.5f, "Speed upgrade") },
-        {20, new WaveParams(10, 12, 45, 5.5f, "Damage upgrade", 2) },
-        {21, new WaveParams(10, 13, 45, 5.5f) },
-        {25, new WaveParams(12, 15, 50, 5.7f, "Speed & damage upgrade", 3) },
-        {30, new WaveParams(12, 14, 55, 6.0f, "Speed & damage upgrade", 4) }
+        {5, new WaveParams(5, 7, 20, 4.4f, "Speed upgrade", 1) },
+        {6, new WaveParams(6, 7, 30, 4.4f, "Damage upgrade") },
+        {10, new WaveParams(7, 9, 30, 4.6f, "Speed upgrade", 2) },
+        {11, new WaveParams(7, 9, 30, 4.6f) },
+        {15, new WaveParams(7, 9, 35, 4.6f, "Damage upgrade", 2) },
+        {16, new WaveParams(8, 10, 35, 4.8f, "Speed upgrade") },
+        {20, new WaveParams(8, 10, 40, 4.8f, "Damage upgrade", 1) },
+        {21, new WaveParams(8, 11, 40, 4.8f) },
+        {25, new WaveParams(7, 9, 45, 4.9f, "Speed & damage upgrade", 3) },
+        {30, new WaveParams(6, 8, 50, 5.0f, "Speed & damage upgrade", 4) }
     };
     
     private void Awake()
@@ -128,6 +130,8 @@ public class GameManager : MonoBehaviour
 
         _messagePrefab = Resources.Load<GameObject>("Prefabs/MessagePrefab");
         _guiRoot = GameObject.Find("UI");
+
+        _dashSlot = GameObject.Find("Slot_Dash").GetComponent<Image>();
 
         _scythe = FindObjectOfType<Scythe>();
         _playerControllerReference = FindObjectOfType<PlayerController>();
@@ -253,6 +257,17 @@ public class GameManager : MonoBehaviour
         _countdownGameObject.SetActive(false);
         UpdateLives();
         StartCoroutine(NewWave());
+    }
+
+    public void UpdateDash(bool canDash)
+    { 
+        if(canDash)
+        {
+            _dashSlot.color = _defaultControlColor;
+        } else
+        {
+            _dashSlot.color = _emptyBucketSlotColor;
+        }
     }
 
     private void ShowMesssage(string message)

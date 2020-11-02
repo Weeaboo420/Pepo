@@ -4,12 +4,17 @@ using UnityEngine;
 public enum Direction
 {
     Left,
-    Right
+    Right,
+    Up,
+    Down,
+    None
 }
 
 public class PlayerController : MonoBehaviour
 {
     private float _speed = 4.2f;
+    private bool _canDash = true;
+    private bool _isDashing = false;
     private const float _depthMultiplier = 0.075f;
     private Vector2 _scytheOffset = new Vector2(1.3f, 0.15f);
 
@@ -23,6 +28,8 @@ public class PlayerController : MonoBehaviour
 
     private Vector2 _currentVelocity;
     private Direction _currentDirection = Direction.Right;
+    private Direction _horizontalDirection = Direction.Right;
+    private Direction _verticalDirection = Direction.None;
     private Direction _currentScytheDirection = Direction.Right;
     private Rigidbody2D _rb;
 
@@ -30,6 +37,7 @@ public class PlayerController : MonoBehaviour
     private const float _attackCooldown = 0.32f;
 
     private GameManager _gameManagerReference;
+    private AudioSource _dashSoundSource;
 
     private void Start() 
     {
@@ -43,9 +51,60 @@ public class PlayerController : MonoBehaviour
         _scytheSpriteRenderer = scythe.GetComponent<SpriteRenderer>();
 
         _gameManagerReference = FindObjectOfType<GameManager>();
+        _dashSoundSource = this.gameObject.AddComponent<AudioSource>();
+        _dashSoundSource.clip = Resources.Load<AudioClip>("SFX/dash");
+        _dashSoundSource.playOnAwake = false;
+        _dashSoundSource.loop = false;
+        _dashSoundSource.volume = 0.5f;
 
         _minBounds = new Vector2(-9f, -15f);
         _maxBounds = new Vector2(13f, 5f);
+    }
+
+    private IEnumerator Dash()
+    {
+        _canDash = false;
+        _dashSoundSource.Play();
+
+        _rb.velocity = Vector2.zero;
+        Vector2 forceDirection = Vector2.zero;
+
+        Vector2 horizontal = Vector2.zero;
+        Vector2 vertical = Vector2.zero;
+
+        switch (_horizontalDirection)
+        {
+            case Direction.Right:
+                horizontal = Vector2.right;
+                break;
+            case Direction.Left:
+                horizontal = Vector2.left;
+                break;
+        }
+
+        switch (_verticalDirection)
+        {
+            case Direction.Up:
+                vertical = Vector2.up;
+                break;
+            case Direction.Down:
+                vertical = Vector2.down;
+                break;
+        }
+
+        forceDirection = horizontal + vertical;        
+
+        _isDashing = true;
+        _rb.AddForce(forceDirection * _speed * 600f, ForceMode2D.Force);        
+        _isDashing = false;
+
+        _gameManagerReference.UpdateDash(false);
+
+        yield return new WaitForSeconds(3.5f);
+        _canDash = true;
+
+        _gameManagerReference.UpdateDash(true);
+
     }
 
     public void SetSpeed(float newSpeed)
@@ -106,8 +165,7 @@ public class PlayerController : MonoBehaviour
     private void Update()
     {
         if (!_gameManagerReference.GetPaused())
-        {
-
+        {            
             //Check if the player is in range of the well.
             RaycastHit2D[] hits = Physics2D.BoxCastAll((Vector2)transform.position, new Vector2(1f, 1f), 0f, Vector2.zero);
             bool inRangeOfWell = false;
@@ -161,38 +219,52 @@ public class PlayerController : MonoBehaviour
                 }
             }
 
-            //Horizontal movement
-            if (Input.GetKey(KeyCode.D))
+            if (!_isDashing)
             {
-                _currentVelocity.x = _speed;
-                SetDirection(Direction.Right);
-            }
+                if(Input.GetKeyDown(KeyCode.LeftShift) && _canDash)
+                {
+                    StartCoroutine(Dash());
+                }
 
-            else if (Input.GetKey(KeyCode.A))
-            {
-                _currentVelocity.x = -_speed;
-                SetDirection(Direction.Left);
-            }
+                //Horizontal movement
+                if (Input.GetKey(KeyCode.D))
+                {
+                    _currentVelocity.x = _speed;
+                    SetDirection(Direction.Right);
+                    _horizontalDirection = Direction.Right;
+                }
 
-            else
-            {
-                _currentVelocity.x = 0;
-            }
+                else if (Input.GetKey(KeyCode.A))
+                {
+                    _currentVelocity.x = -_speed;
+                    SetDirection(Direction.Left);
+                    _horizontalDirection = Direction.Left;
+                }
 
-            //Vertical movement
-            if (Input.GetKey(KeyCode.W))
-            {
-                _currentVelocity.y = _speed;
-            }
+                else
+                {
+                    _currentVelocity.x = 0;
+                    _horizontalDirection = Direction.None;
+                }
 
-            else if (Input.GetKey(KeyCode.S))
-            {
-                _currentVelocity.y = -_speed;
-            }
+                //Vertical movement
+                if (Input.GetKey(KeyCode.W))
+                {
+                    _currentVelocity.y = _speed;
+                    _verticalDirection = Direction.Up;
+                }
 
-            else
-            {
-                _currentVelocity.y = 0;
+                else if (Input.GetKey(KeyCode.S))
+                {
+                    _currentVelocity.y = -_speed;
+                    _verticalDirection = Direction.Down;
+                }
+
+                else
+                {
+                    _currentVelocity.y = 0;
+                    _verticalDirection = Direction.None;
+                }
             }
 
             _rb.velocity = Vector2.ClampMagnitude(_currentVelocity, _speed); //Clamp the movement to prevent faster diagonal movement

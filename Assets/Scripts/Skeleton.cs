@@ -68,8 +68,7 @@ public class Skeleton : MonoBehaviour
 
         if (!_isSuperSkeleton)
         {
-            _currentHealth = Random.Range(55, _maxHealth);
-            _maxHealth = _currentHealth;
+            _currentHealth = _maxHealth;
         }
         else
         {
@@ -110,14 +109,16 @@ public class Skeleton : MonoBehaviour
 
     private IEnumerator StartDelay()
     {
-        yield return new WaitForSeconds(Random.Range(0.9f, 3f));
+        
         
         if (!_isSuperSkeleton)
         {
-            _speed = Random.Range(1.8f, 2.35f);
+            yield return new WaitForSeconds(Random.Range(1f, 4f));
+            _speed = 2.75f;
         } else
         {
-            _speed = 1.4f;
+            yield return new WaitForSeconds(0.1f);
+            _speed = 1.8f;
         }
 
         _canMove = true;
@@ -170,6 +171,15 @@ public class Skeleton : MonoBehaviour
     {
         _canAttack = false;
 
+        if (!_isSuperSkeleton)
+        {
+            yield return new WaitForSeconds(1.7f);
+        }
+        else
+        {
+            yield return new WaitForSeconds(2.2f);
+        }
+
         RaycastHit2D[] hits = Physics2D.BoxCastAll(transform.position, Vector2.one, 0f, Vector2.zero);
         foreach(RaycastHit2D hit in hits) 
         { 
@@ -186,7 +196,7 @@ public class Skeleton : MonoBehaviour
                         pumpkinScript.SetWaterValue(pumpkinScript.GetWaterValue() - 1);
                     } else
                     {
-                        pumpkinScript.SetWaterValue(pumpkinScript.GetWaterValue() - 3);
+                        pumpkinScript.SetWaterValue(pumpkinScript.GetWaterValue() - 4);
                     }
 
                     _gameManagerReference.CreateHitPrefab(new Vector3(hit.transform.position.x, hit.transform.position.y, transform.position.z - 1f));
@@ -203,14 +213,7 @@ public class Skeleton : MonoBehaviour
                 break;
             }
         }
-
-        if (!_isSuperSkeleton)
-        {
-            yield return new WaitForSeconds(1);
-        } else
-        {
-            yield return new WaitForSeconds(2);
-        }
+        
         _canAttack = true;
     }
 
