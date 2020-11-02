@@ -11,8 +11,11 @@ public class GameManager : MonoBehaviour
     private GameObject _gameOverScreen;
     private GameObject _titleScreen;
     private GameObject _pauseScreen;
+    private GameObject _settingsScreen;
 
     private PlayerController _playerControllerReference;
+
+    private Settings _settingsReference;
 
     private int _lives;
     private Text _livesText;
@@ -110,8 +113,13 @@ public class GameManager : MonoBehaviour
             _paths.Add(child.GetComponent<Path>());
         }
 
+        _settingsReference = FindObjectOfType<Settings>();
+
         _gameOverScreen = GameObject.Find("GameOverScreen");
         _gameOverScreen.SetActive(false);
+
+        _settingsScreen = GameObject.Find("SettingsScreen");
+        _settingsScreen.SetActive(false);
 
         _pauseScreen = GameObject.Find("PauseScreen");
         _pauseScreen.SetActive(false);
@@ -191,7 +199,7 @@ public class GameManager : MonoBehaviour
         GameObject hitSoundGameObject = new GameObject("audio_hit_skeleton");
         _hitAudioSource = hitSoundGameObject.AddComponent<AudioSource>();
         _hitAudioSource.clip = Resources.Load<AudioClip>("SFX/hit");
-        _hitAudioSource.volume = 0.8f;
+        _hitAudioSource.volume = 0.75f;
         _hitAudioSource.playOnAwake = false;
         _hitAudioSource.loop = false;
 
@@ -332,6 +340,11 @@ public class GameManager : MonoBehaviour
         Application.Quit();
     }
 
+    public void ShowSettings(bool showSettings)
+    {
+        _settingsScreen.SetActive(showSettings);
+    }
+
     public IEnumerator NewWave()
     {
         _wave++;
@@ -444,6 +457,8 @@ public class GameManager : MonoBehaviour
     public void CreateHitPrefab(Vector3 position)
     {
         Instantiate(_hitPrefab, position, Quaternion.identity);
+
+        _hitAudioSource.volume = _settingsReference.GetSfxVolume("Hit");
         _hitAudioSource.Play();
     }
 
@@ -453,6 +468,8 @@ public class GameManager : MonoBehaviour
         Instantiate(_hitPrefab, position + new Vector3(0.2f, 0.05f, 0f), Quaternion.identity);
         Instantiate(_hitPrefab, position + new Vector3(-0.1f, 0f, 0f), Quaternion.identity);
         Instantiate(_hitPrefab, position + new Vector3(-0.15f, -0.2f, 0f), Quaternion.identity);
+
+        _explosionAudioSource.volume = _settingsReference.GetSfxVolume("Explosion");
         _explosionAudioSource.Play();
     }
 
@@ -466,10 +483,10 @@ public class GameManager : MonoBehaviour
 
                 if(forSkeleton)
                 {
-                    stepSoundSource.volume = 0.4f;
+                    stepSoundSource.volume = _settingsReference.GetSfxVolume("Footstep_Skeleton");
                 } else
                 {
-                    stepSoundSource.volume = 0.7f;
+                    stepSoundSource.volume = _settingsReference.GetSfxVolume("Footstep_Player");
                 }
 
                 stepSoundSource.Play();
@@ -486,6 +503,7 @@ public class GameManager : MonoBehaviour
             if (!audioSource.isPlaying)
             {
                 audioSource.clip = _jackLanternSpawnSounds[Random.Range(0, _jackLanternSpawnSounds.Length - 1)];
+                audioSource.volume = _settingsReference.GetSfxVolume("Pumpkin");
                 audioSource.Play();
                 break;
             }
@@ -499,6 +517,7 @@ public class GameManager : MonoBehaviour
             if (!audioSource.isPlaying)
             {
                 audioSource.clip = _jackLanternSpawnSounds[_jackLanternSpawnSounds.Length - 1];
+                audioSource.volume = _settingsReference.GetSfxVolume("Pumpkin");
                 audioSource.Play();
                 break;
             }
@@ -588,6 +607,7 @@ public class GameManager : MonoBehaviour
         }
 
         _bucketSoundSource.clip = _bucketRefillSounds[Random.Range(0, _bucketRefillSounds.Length)];
+        _bucketSoundSource.volume = _settingsReference.GetSfxVolume("Splash");
         _bucketSoundSource.Play();
 
         _waterBucketFilled = filled;        
@@ -660,10 +680,20 @@ public class GameManager : MonoBehaviour
         }
 
         //Pausing
-        if(Input.GetKeyDown(KeyCode.Escape) && _hasStarted)
+        if(Input.GetKeyDown(KeyCode.Escape))
         {
-            TogglePause();
-        }        
+            //If the settings screen is not displayed then toggle pause like normal
+            if (!_settingsScreen.activeSelf && _hasStarted)
+            {
+                TogglePause();
+            }
+
+            //If the settings screen is displayed then close it
+            else
+            {
+                ShowSettings(false);
+            }
+        } 
 
         //Bomb placement
         if(Input.GetKeyDown(KeyCode.R) && _bombPoints >= _pointsPerBomb)

@@ -11,6 +11,7 @@ public class Scythe : MonoBehaviour
 
     private PlayerController _playerController;
     private GameManager _gameManagerReference;
+    private Settings _settingsReference;
 
     private void Start()
     {
@@ -20,6 +21,7 @@ public class Scythe : MonoBehaviour
 
         _playerController = FindObjectOfType<PlayerController>();
         _gameManagerReference = FindObjectOfType<GameManager>();
+        _settingsReference = FindObjectOfType<Settings>();
 
         for(int i = 0; i < 5; i++)
         {
@@ -48,6 +50,7 @@ public class Scythe : MonoBehaviour
                     audioSource.clip = _hitSound;
                 }
 
+                audioSource.volume = _settingsReference.GetSfxVolume("Hit");
                 audioSource.Play();
 
                 break;

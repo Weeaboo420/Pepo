@@ -20,6 +20,8 @@ public class PlayerController : MonoBehaviour
 
     private Vector2 _minBounds, _maxBounds;
 
+    private Settings _settingsReference;
+
     private SpriteRenderer _spriteRenderer;
     private SpriteRenderer _scytheSpriteRenderer;
     private Animator _scytheAnimator;
@@ -43,7 +45,9 @@ public class PlayerController : MonoBehaviour
     {
         _rb = GetComponent<Rigidbody2D>();
         _spriteRenderer = GetComponent<SpriteRenderer>();
-        
+
+        _settingsReference = FindObjectOfType<Settings>();
+
         GameObject scythe = GameObject.Find("Scythe");
         _scytheAnimator = scythe.GetComponent<Animator>();
         _playerAnimator = GetComponent<Animator>();
@@ -64,6 +68,8 @@ public class PlayerController : MonoBehaviour
     private IEnumerator Dash()
     {
         _canDash = false;
+
+        _dashSoundSource.volume = _settingsReference.GetSfxVolume("Dash");
         _dashSoundSource.Play();
 
         _rb.velocity = Vector2.zero;

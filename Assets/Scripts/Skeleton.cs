@@ -219,14 +219,28 @@ public class Skeleton : MonoBehaviour
 
     private void FindNextNode()
     {
-        if(_nodeIndex < _path.GetNodes().Length - 1)
+        if (!_hasReachedPumpkin)
         {
-            _nodeIndex++;
-            _nextNode = _path.GetNodes()[_nodeIndex];
-            _nextNode.y += _nodeHeightOffset;            
-        } else
-        {
-            _hasReachedPumpkin = true;
+            if (_nodeIndex < _path.GetNodes().Length - 1)
+            {
+                _nodeIndex++;
+                _nextNode = _path.GetNodes()[_nodeIndex];
+                _nextNode.y += _nodeHeightOffset;
+            }
+            else
+            {
+                _hasReachedPumpkin = true;
+
+                Vector2 pumpkinPosition = _path.GetPumpkin().transform.position;
+                if (pumpkinPosition.x > transform.position.x)
+                {
+                    _spriteRenderer.flipX = false;
+                }
+                else
+                {
+                    _spriteRenderer.flipX = true;
+                }
+            }
         }
     }
 

@@ -65,6 +65,7 @@
   <ItemGroup>
     <Compile Include="Assets\Scripts\Bomb.cs" />
     <Compile Include="Assets\Scripts\CameraFollow.cs" />
+    <Compile Include="Assets\Scripts\DefaultSettings.cs" />
     <Compile Include="Assets\Scripts\GameManager.cs" />
     <Compile Include="Assets\Scripts\Path.cs" />
     <Compile Include="Assets\Scripts\PlayerController.cs" />
@@ -72,6 +73,7 @@
     <Compile Include="Assets\Scripts\Pumpkin.cs" />
     <Compile Include="Assets\Scripts\Scythe.cs" />
     <Compile Include="Assets\Scripts\SelfDestruct.cs" />
+    <Compile Include="Assets\Scripts\Settings.cs" />
     <Compile Include="Assets\Scripts\Skeleton.cs" />
     <Compile Include="Assets\Scripts\WaveParams.cs" />
     <Reference Include="UnityEngine">
