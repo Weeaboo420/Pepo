@@ -7,6 +7,7 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     private bool _paused = true;
+    private bool _acceptsBucketInput = false;
     private bool _hasStarted = false;
     private GameObject _gameOverScreen;
     private GameObject _titleScreen;
@@ -36,6 +37,13 @@ public class GameManager : MonoBehaviour
 
     private GameObject _messagePrefab;
     private GameObject _guiRoot;
+    private GuiManager _guiManagerReference;
+
+    //The default buttons to refocus on when swapping to using a controller
+    private GameObject _titleScreenDefault;
+    private GameObject _settingsScreenDefault;
+    private GameObject _pauseScreenDefault;
+    private GameObject _gameOverScreenDefault;
 
     private Image _dashSlot;
 
@@ -113,7 +121,23 @@ public class GameManager : MonoBehaviour
             _paths.Add(child.GetComponent<Path>());
         }
 
+        List<GameObject> controllerButtons = new List<GameObject>();
+        foreach(GameObject button in GameObject.FindGameObjectsWithTag("Button"))
+        {
+            controllerButtons.Add(button);
+        }
+
+        List<GameObject> pcButtons = new List<GameObject>();
+        foreach(GameObject button in GameObject.FindGameObjectsWithTag("Key"))
+        {
+            pcButtons.Add(button);
+        }
+
         _settingsReference = FindObjectOfType<Settings>();
+        _guiManagerReference = FindObjectOfType<GuiManager>();
+
+        _guiManagerReference.SetControllerButtons(controllerButtons.ToArray());
+        _guiManagerReference.SetPcButtons(pcButtons.ToArray());
 
         _gameOverScreen = GameObject.Find("GameOverScreen");
         _gameOverScreen.SetActive(false);
@@ -262,6 +286,12 @@ public class GameManager : MonoBehaviour
             _lives++;
         }
 
+        //Gui defaults
+        _titleScreenDefault = _titleScreen.transform.Find("PlayBtn").gameObject;
+        _settingsScreenDefault = _settingsScreen.transform.Find("BackBtn").gameObject;
+        _pauseScreenDefault = _pauseScreen.transform.Find("ResumeBtn").gameObject;
+        _gameOverScreenDefault = _gameOverScreen.transform.Find("RetryBtn").gameObject;
+
         _countdownGameObject.SetActive(false);
         UpdateLives();
         StartCoroutine(NewWave());
@@ -306,6 +336,11 @@ public class GameManager : MonoBehaviour
 
     public void TogglePause()
     {
+        StartCoroutine(TogglePauseDelay());
+    }
+
+    private IEnumerator TogglePauseDelay()
+    {
         if (_lives > 0)
         {
             if (_titleScreen.activeSelf)
@@ -316,17 +351,26 @@ public class GameManager : MonoBehaviour
 
             _paused = !_paused;
             _pauseScreen.SetActive(_paused);
+            _guiManagerReference.OnPauseChanged();
+
+            if (_pauseScreen.activeSelf)
+            {
+                _guiManagerReference.SetDefaultSelection(_pauseScreenDefault);
+            }
 
             if (_paused)
             {
-                Time.timeScale = 0f;
-                Cursor.visible = true;
+                _acceptsBucketInput = false;
+                Time.timeScale = 0f;                
             }
             else
             {
                 Time.timeScale = 1f;
-                Cursor.visible = false;
-            }
+                yield return new WaitForSeconds(0.1f);
+                _acceptsBucketInput = true;
+            }            
+
+            
         }
     }
 
@@ -340,9 +384,23 @@ public class GameManager : MonoBehaviour
         Application.Quit();
     }
 
-    public void ShowSettings(bool showSettings)
+    public void ShowSettings(GameObject newDefault)
     {
-        _settingsScreen.SetActive(showSettings);
+        _settingsScreen.SetActive(true);
+        _guiManagerReference.SetDefaultSelection(newDefault);
+    }
+
+    public void HideSettings()
+    {
+        _settingsScreen.SetActive(false);
+        
+        if(_titleScreen.activeSelf)
+        {
+            _guiManagerReference.SetDefaultSelection(_titleScreenDefault);
+        } else
+        {
+            _guiManagerReference.SetDefaultSelection(_pauseScreenDefault);
+        }
     }
 
     public IEnumerator NewWave()
@@ -410,6 +468,7 @@ public class GameManager : MonoBehaviour
         {
             Time.timeScale = 0f;
             _gameOverScreen.SetActive(true);
+            _guiManagerReference.SetDefaultSelection(_gameOverScreenDefault);
             Cursor.visible = true;
         }
     }
@@ -676,7 +735,11 @@ public class GameManager : MonoBehaviour
         if(_countdownActive)
         {
             _nextWaveCountdown -= Time.deltaTime;
-            _countdownText.text = Mathf.RoundToInt(_nextWaveCountdown).ToString();
+
+            int timeLeft = Mathf.RoundToInt(_nextWaveCountdown + 1);
+            timeLeft = (int)Mathf.Clamp(timeLeft, 1, _nextWaveCountdown+1);
+
+            _countdownText.text = timeLeft.ToString();
         }
 
         //Pausing
@@ -685,18 +748,39 @@ public class GameManager : MonoBehaviour
             //If the settings screen is not displayed then toggle pause like normal
             if (!_settingsScreen.activeSelf && _hasStarted)
             {
-                TogglePause();
+                TogglePause();                
             }
 
             //If the settings screen is displayed then close it
             else
             {
-                ShowSettings(false);
+                HideSettings();
             }
-        } 
+        }
+
+        else if(Input.GetButtonDown("Start"))
+        {
+            //If the settings screen is not displayed then toggle pause like normal
+            if (!_settingsScreen.activeSelf && _hasStarted)
+            {
+                TogglePause();
+            }
+        }
+
+        //If "B" is pressed while the settings menu is up
+        if(Input.GetButtonDown("B") && _settingsScreen.activeSelf)
+        {
+            HideSettings();
+        }
+
+        //If "B" is pressed while the pause menu is up
+        else if(Input.GetButtonDown("B") && _pauseScreen.activeSelf && _paused)
+        {
+            TogglePause();
+        }
 
         //Bomb placement
-        if(Input.GetKeyDown(KeyCode.R) && _bombPoints >= _pointsPerBomb)
+        if(Input.GetKeyDown(KeyCode.R) && _bombPoints >= _pointsPerBomb || Input.GetButtonDown("X") && _bombPoints >= _pointsPerBomb)
         {
             _bombPoints -= _pointsPerBomb;
             _bombText.text = _bombPoints.ToString() + "/" + _pointsPerBomb.ToString();
@@ -710,37 +794,48 @@ public class GameManager : MonoBehaviour
         }
 
         //Puddles
-        if(Input.GetKeyDown(KeyCode.E) && _waterBucketFilled && _selectedPumpkin == null && !_canFillBucket)
+        if(Input.GetKeyDown(KeyCode.E) && _waterBucketFilled && _selectedPumpkin == null && !_canFillBucket ||
+            Input.GetButtonDown("A") && _waterBucketFilled && _selectedPumpkin == null && !_canFillBucket)
         {
-            Instantiate(_puddlePrefab, _playerControllerReference.transform.position - new Vector3(0, 0.6f, 0), Quaternion.identity);
-            Instantiate(_splashPrefab, _playerControllerReference.transform.position - new Vector3(0, 0.6f, 0), Quaternion.identity);
-            _waterBucketFilled = false;
-            UpdateWaterBucket(false);
+            if (_acceptsBucketInput)
+            {
+                Instantiate(_puddlePrefab, _playerControllerReference.transform.position - new Vector3(0, 0.6f, 0), Quaternion.identity);
+                Instantiate(_splashPrefab, _playerControllerReference.transform.position - new Vector3(0, 0.6f, 0), Quaternion.identity);
+                _waterBucketFilled = false;
+                UpdateWaterBucket(false);
+            }
         }
 
         //Pumpkin watering
-        else if(Input.GetKeyDown(KeyCode.E) && _canWater && _selectedPumpkin != null && _waterBucketFilled && !_canFillBucket)
+        else if(Input.GetKeyDown(KeyCode.E) && _canWater && _selectedPumpkin != null && _waterBucketFilled && !_canFillBucket ||
+            Input.GetButtonDown("A") && _canWater && _selectedPumpkin != null && _waterBucketFilled && !_canFillBucket)
         {
-
-            //Prevent the player from wasting a bucket on a pumpkin that is a jack o'lantern and that has a full water bar
-            if (_selectedPumpkin.GetStage() <= 1 || _selectedPumpkin.GetStage() == 2 && _selectedPumpkin.GetWaterValue() < _selectedPumpkin.GetMaxWaterValue())
+            if (_acceptsBucketInput)
             {
-                _selectedPumpkin.SetWaterValue(_selectedPumpkin.GetWaterValue() + 1);
-                _canWater = false;
-                _waterPumpkinPrompt.SetActive(false);
-                _canFillBucket = false;
+                //Prevent the player from wasting a bucket on a pumpkin that is a jack o'lantern and that has a full water bar
+                if (_selectedPumpkin.GetStage() <= 1 || _selectedPumpkin.GetStage() == 2 && _selectedPumpkin.GetWaterValue() < _selectedPumpkin.GetMaxWaterValue())
+                {
+                    _selectedPumpkin.SetWaterValue(_selectedPumpkin.GetWaterValue() + 1);
+                    _canWater = false;
+                    _waterPumpkinPrompt.SetActive(false);
+                    _canFillBucket = false;
 
-                UpdateWaterBucket(false);
-                Instantiate(_splashPrefab, new Vector3(_selectedPumpkin.transform.position.x, _selectedPumpkin.transform.position.y - 0.1f, -2f), Quaternion.identity);
+                    UpdateWaterBucket(false);
+                    Instantiate(_splashPrefab, new Vector3(_selectedPumpkin.transform.position.x, _selectedPumpkin.transform.position.y - 0.1f, -2f), Quaternion.identity);
+                }
             }
         }
 
         //Water bucket refill
-        else if (Input.GetKeyDown(KeyCode.E) && _canFillBucket && !_waterBucketFilled)
+        else if (Input.GetKeyDown(KeyCode.E) && _canFillBucket && !_waterBucketFilled ||
+            Input.GetButtonDown("A") && _canFillBucket && !_waterBucketFilled)
         {
-            UpdateWaterBucket(true);
-            _canFillBucket = false;
-            Instantiate(_splashPrefab, new Vector3(_wellTransform.position.x, _wellTransform.position.y - 1f, -2f), Quaternion.identity);
+            if (_acceptsBucketInput)
+            {
+                UpdateWaterBucket(true);
+                _canFillBucket = false;
+                Instantiate(_splashPrefab, new Vector3(_wellTransform.position.x, _wellTransform.position.y - 1f, -2f), Quaternion.identity);
+            }
         }
 
         if(_selectedPumpkin != null && _canWater && _waterBucketFilled)

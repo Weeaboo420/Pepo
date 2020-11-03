@@ -12,6 +12,8 @@ TagManager:
   - Tallgrass
   - Music
   - SFX
+  - Button
+  - Key
   layers:
   - Default
   - TransparentFX

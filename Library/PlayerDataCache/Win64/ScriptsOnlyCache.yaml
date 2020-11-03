@@ -4,6 +4,7 @@ ScriptsOnlyBuild:
     - Bomb
     - CameraFollow
     - GameManager
+    - GuiManager
     - Path
     - PlayerController
     - Puddle
@@ -89,31 +90,33 @@ ScriptsOnlyBuild:
     - Class: 114
       Script: {instanceID: 11520}
     - Class: 114
-      Script: {instanceID: 12182}
+      Script: {instanceID: 11794}
     - Class: 114
-      Script: {instanceID: 12388}
+      Script: {instanceID: 12186}
     - Class: 114
-      Script: {instanceID: 12746}
+      Script: {instanceID: 12392}
     - Class: 114
-      Script: {instanceID: 12758}
+      Script: {instanceID: 12632}
     - Class: 114
-      Script: {instanceID: 12886}
+      Script: {instanceID: 12752}
     - Class: 114
-      Script: {instanceID: 13054}
+      Script: {instanceID: 12764}
     - Class: 114
-      Script: {instanceID: 13148}
+      Script: {instanceID: 12892}
+    - Class: 114
+      Script: {instanceID: 13060}
     - Class: 114
       Script: {instanceID: 13154}
     - Class: 114
-      Script: {instanceID: 13648}
+      Script: {instanceID: 13160}
     - Class: 114
-      Script: {instanceID: 14258}
+      Script: {instanceID: 13654}
     - Class: 114
-      Script: {instanceID: 14278}
+      Script: {instanceID: 14264}
     - Class: 114
-      Script: {instanceID: 14300}
+      Script: {instanceID: 14284}
     - Class: 114
-      Script: {instanceID: 19676}
+      Script: {instanceID: 14306}
     - Class: 115
       Script: {instanceID: 0}
     - Class: 128
@@ -285,6 +288,12 @@ ScriptsOnlyBuild:
     className: PhysicsRaycaster
   - hash:
       serializedVersion: 2
+      Hash: 71bb6a6b6c8f052f948db64c7dd3ca4f
+    assemblyName: Assembly-CSharp.dll
+    namespaceName: 
+    className: Settings
+  - hash:
+      serializedVersion: 2
       Hash: bd3cf68c8964d3c66d1c43f4f98508c9
     assemblyName: Unity.Timeline.dll
     namespaceName: UnityEngine.Timeline
@@ -415,6 +424,12 @@ ScriptsOnlyBuild:
     assemblyName: Unity.2D.Animation.Runtime.dll
     namespaceName: UnityEngine.U2D.Animation
     className: SpriteSkinEntity
+  - hash:
+      serializedVersion: 2
+      Hash: 71bb6a6b6c8f052f948db64c7dd3ca4f
+    assemblyName: Assembly-CSharp.dll
+    namespaceName: 
+    className: GuiManager
   - hash:
       serializedVersion: 2
       Hash: 71bb6a6b6c8f052f948db64c7dd3ca4f
@@ -673,12 +688,6 @@ ScriptsOnlyBuild:
     assemblyName: Unity.Timeline.dll
     namespaceName: UnityEngine.Timeline
     className: PlayableTrack
-  - hash:
-      serializedVersion: 2
-      Hash: 71bb6a6b6c8f052f948db64c7dd3ca4f
-    assemblyName: Assembly-CSharp.dll
-    namespaceName: 
-    className: Settings
   platform: 19
   scenePathNames:
   - Assets/Scenes/SampleScene.unity

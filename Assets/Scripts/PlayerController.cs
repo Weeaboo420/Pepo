@@ -12,6 +12,10 @@ public enum Direction
 
 public class PlayerController : MonoBehaviour
 {
+    //Controller setup
+    private const float _analogDeadzone = 0.5f;
+    private const float _triggerDeadzone = 0.5f;
+    
     private float _speed = 4.2f;
     private bool _canDash = true;
     private bool _isDashing = false;
@@ -67,50 +71,53 @@ public class PlayerController : MonoBehaviour
 
     private IEnumerator Dash()
     {
-        _canDash = false;
-
-        _dashSoundSource.volume = _settingsReference.GetSfxVolume("Dash");
-        _dashSoundSource.Play();
-
-        _rb.velocity = Vector2.zero;
-        Vector2 forceDirection = Vector2.zero;
-
-        Vector2 horizontal = Vector2.zero;
-        Vector2 vertical = Vector2.zero;
-
-        switch (_horizontalDirection)
+        //Only dash if the player is moving
+        if (_rb.velocity.magnitude > 0)
         {
-            case Direction.Right:
-                horizontal = Vector2.right;
-                break;
-            case Direction.Left:
-                horizontal = Vector2.left;
-                break;
+            _canDash = false;
+
+            _dashSoundSource.volume = _settingsReference.GetSfxVolume("Dash");
+            _dashSoundSource.Play();
+
+            _rb.velocity = Vector2.zero;
+            Vector2 forceDirection = Vector2.zero;
+
+            Vector2 horizontal = Vector2.zero;
+            Vector2 vertical = Vector2.zero;
+
+            switch (_horizontalDirection)
+            {
+                case Direction.Right:
+                    horizontal = Vector2.right;
+                    break;
+                case Direction.Left:
+                    horizontal = Vector2.left;
+                    break;
+            }
+
+            switch (_verticalDirection)
+            {
+                case Direction.Up:
+                    vertical = Vector2.up;
+                    break;
+                case Direction.Down:
+                    vertical = Vector2.down;
+                    break;
+            }
+
+            forceDirection = horizontal + vertical;
+
+            _isDashing = true;
+            _rb.AddForce(forceDirection * _speed * 600f, ForceMode2D.Force);
+            _isDashing = false;
+
+            _gameManagerReference.UpdateDash(false);
+
+            yield return new WaitForSeconds(3.5f);
+            _canDash = true;
+
+            _gameManagerReference.UpdateDash(true);
         }
-
-        switch (_verticalDirection)
-        {
-            case Direction.Up:
-                vertical = Vector2.up;
-                break;
-            case Direction.Down:
-                vertical = Vector2.down;
-                break;
-        }
-
-        forceDirection = horizontal + vertical;        
-
-        _isDashing = true;
-        _rb.AddForce(forceDirection * _speed * 600f, ForceMode2D.Force);        
-        _isDashing = false;
-
-        _gameManagerReference.UpdateDash(false);
-
-        yield return new WaitForSeconds(3.5f);
-        _canDash = true;
-
-        _gameManagerReference.UpdateDash(true);
-
     }
 
     public void SetSpeed(float newSpeed)
@@ -202,7 +209,7 @@ public class PlayerController : MonoBehaviour
             //Scythe
 
             //Left swing
-            if (Input.GetKeyDown(KeyCode.J) || Input.GetKey(KeyCode.J) || Input.GetMouseButton(0) || Input.GetMouseButtonDown(0))
+            if (Input.GetKeyDown(KeyCode.J) || Input.GetKey(KeyCode.J) || Input.GetMouseButton(0) || Input.GetMouseButtonDown(0) || Input.GetAxis("LT") > _triggerDeadzone)
             {
                 if (_canAttack)
                 {
@@ -214,7 +221,7 @@ public class PlayerController : MonoBehaviour
             }
 
             //Right swing
-            else if (Input.GetKeyDown(KeyCode.K) || Input.GetKey(KeyCode.K) || Input.GetMouseButton(1) || Input.GetMouseButtonDown(1))
+            else if (Input.GetKeyDown(KeyCode.K) || Input.GetKey(KeyCode.K) || Input.GetMouseButton(1) || Input.GetMouseButtonDown(1) || Input.GetAxis("RT") > _triggerDeadzone)
             {
                 if (_canAttack)
                 {
@@ -227,21 +234,24 @@ public class PlayerController : MonoBehaviour
 
             if (!_isDashing)
             {
-                if(Input.GetKeyDown(KeyCode.LeftShift) && _canDash)
+                if(Input.GetKeyDown(KeyCode.LeftShift) || Input.GetButtonDown("B"))
                 {
-                    StartCoroutine(Dash());
+                    if (_canDash)
+                    {
+                        StartCoroutine(Dash());
+                    }
                 }
 
                 //Horizontal movement
-                if (Input.GetKey(KeyCode.D))
+                if (Input.GetKey(KeyCode.D) || Input.GetAxis("LS_horizontal") > _analogDeadzone)
                 {
                     _currentVelocity.x = _speed;
                     SetDirection(Direction.Right);
                     _horizontalDirection = Direction.Right;
                 }
 
-                else if (Input.GetKey(KeyCode.A))
-                {
+                else if (Input.GetKey(KeyCode.A) || Input.GetAxis("LS_horizontal") < -_analogDeadzone)
+                {                    
                     _currentVelocity.x = -_speed;
                     SetDirection(Direction.Left);
                     _horizontalDirection = Direction.Left;
@@ -254,13 +264,13 @@ public class PlayerController : MonoBehaviour
                 }
 
                 //Vertical movement
-                if (Input.GetKey(KeyCode.W))
+                if (Input.GetKey(KeyCode.W) || Input.GetAxis("LS_vertical") < -_analogDeadzone)
                 {
                     _currentVelocity.y = _speed;
                     _verticalDirection = Direction.Up;
                 }
 
-                else if (Input.GetKey(KeyCode.S))
+                else if (Input.GetKey(KeyCode.S) || Input.GetAxis("LS_vertical") > _analogDeadzone)
                 {
                     _currentVelocity.y = -_speed;
                     _verticalDirection = Direction.Down;
