@@ -7,7 +7,7 @@ using UnityEngine;
 public class GameManager : MonoBehaviour
 {
     private bool _paused = true;
-    private bool _acceptsBucketInput = false;
+    private bool _acceptsInput = false;
     private bool _hasStarted = false;
     private GameObject _gameOverScreen;
     private GameObject _titleScreen;
@@ -360,14 +360,14 @@ public class GameManager : MonoBehaviour
 
             if (_paused)
             {
-                _acceptsBucketInput = false;
+                _acceptsInput = false;
                 Time.timeScale = 0f;                
             }
             else
             {
                 Time.timeScale = 1f;
                 yield return new WaitForSeconds(0.1f);
-                _acceptsBucketInput = true;
+                _acceptsInput = true;
             }            
 
             
@@ -729,6 +729,11 @@ public class GameManager : MonoBehaviour
         
     }
 
+    public bool GetAcceptsInput()
+    {
+        return _acceptsInput;
+    }
+
     private void Update()
     {        
         //Next wave countdown
@@ -782,14 +787,17 @@ public class GameManager : MonoBehaviour
         //Bomb placement
         if(Input.GetKeyDown(KeyCode.R) && _bombPoints >= _pointsPerBomb || Input.GetButtonDown("X") && _bombPoints >= _pointsPerBomb)
         {
-            _bombPoints -= _pointsPerBomb;
-            _bombText.text = _bombPoints.ToString() + "/" + _pointsPerBomb.ToString();
-            Instantiate(_bombPrefab, _playerControllerReference.transform.position, Quaternion.identity);
-            PlayThudSound();
-
-            if (_bombPoints < _pointsPerBomb)
+            if (_acceptsInput)
             {
-                _bombControls.color = _disabledControlColor;
+                _bombPoints -= _pointsPerBomb;
+                _bombText.text = _bombPoints.ToString() + "/" + _pointsPerBomb.ToString();
+                Instantiate(_bombPrefab, _playerControllerReference.transform.position, Quaternion.identity);
+                PlayThudSound();
+
+                if (_bombPoints < _pointsPerBomb)
+                {
+                    _bombControls.color = _disabledControlColor;
+                }
             }
         }
 
@@ -797,7 +805,7 @@ public class GameManager : MonoBehaviour
         if(Input.GetKeyDown(KeyCode.E) && _waterBucketFilled && _selectedPumpkin == null && !_canFillBucket ||
             Input.GetButtonDown("A") && _waterBucketFilled && _selectedPumpkin == null && !_canFillBucket)
         {
-            if (_acceptsBucketInput)
+            if (_acceptsInput)
             {
                 Instantiate(_puddlePrefab, _playerControllerReference.transform.position - new Vector3(0, 0.6f, 0), Quaternion.identity);
                 Instantiate(_splashPrefab, _playerControllerReference.transform.position - new Vector3(0, 0.6f, 0), Quaternion.identity);
@@ -810,7 +818,7 @@ public class GameManager : MonoBehaviour
         else if(Input.GetKeyDown(KeyCode.E) && _canWater && _selectedPumpkin != null && _waterBucketFilled && !_canFillBucket ||
             Input.GetButtonDown("A") && _canWater && _selectedPumpkin != null && _waterBucketFilled && !_canFillBucket)
         {
-            if (_acceptsBucketInput)
+            if (_acceptsInput)
             {
                 //Prevent the player from wasting a bucket on a pumpkin that is a jack o'lantern and that has a full water bar
                 if (_selectedPumpkin.GetStage() <= 1 || _selectedPumpkin.GetStage() == 2 && _selectedPumpkin.GetWaterValue() < _selectedPumpkin.GetMaxWaterValue())
@@ -830,7 +838,7 @@ public class GameManager : MonoBehaviour
         else if (Input.GetKeyDown(KeyCode.E) && _canFillBucket && !_waterBucketFilled ||
             Input.GetButtonDown("A") && _canFillBucket && !_waterBucketFilled)
         {
-            if (_acceptsBucketInput)
+            if (_acceptsInput)
             {
                 UpdateWaterBucket(true);
                 _canFillBucket = false;

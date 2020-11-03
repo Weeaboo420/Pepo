@@ -236,7 +236,7 @@ public class PlayerController : MonoBehaviour
             {
                 if(Input.GetKeyDown(KeyCode.LeftShift) || Input.GetButtonDown("B"))
                 {
-                    if (_canDash)
+                    if (_canDash && _gameManagerReference.GetAcceptsInput())
                     {
                         StartCoroutine(Dash());
                     }
