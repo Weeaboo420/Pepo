@@ -39,7 +39,7 @@ public class GuiManager : MonoBehaviour
         } else
         {
             _eventSystem.firstSelectedGameObject = null;
-            _eventSystem.SetSelectedGameObject(null);            
+            _eventSystem.SetSelectedGameObject(null);
         }
 
         _gameManagerReference = FindObjectOfType<GameManager>();
@@ -82,6 +82,9 @@ public class GuiManager : MonoBehaviour
         if (_gameManagerReference.GetPaused())
         {
             Cursor.visible = !visible;
+        } else
+        {
+            Cursor.visible = false;
         }
     }
 
