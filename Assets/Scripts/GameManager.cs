@@ -6,6 +6,8 @@ using UnityEngine;
 
 public class GameManager : MonoBehaviour
 {
+    private const bool _devMode = false;
+
     private bool _paused = true;
     private bool _acceptsInput = false;
     private bool _hasStarted = false;
@@ -326,7 +328,7 @@ public class GameManager : MonoBehaviour
         foreach (GameObject tallGrass in GameObject.FindGameObjectsWithTag("Tallgrass"))
         {
             tallGrass.transform.position = new Vector3(tallGrass.transform.position.x, tallGrass.transform.position.y, (tallGrass.transform.position.y * 0.075f) + 11);
-        }
+        }        
     }
 
     public bool GetPaused()
@@ -798,6 +800,15 @@ public class GameManager : MonoBehaviour
                 {
                     _bombControls.color = _disabledControlColor;
                 }
+            }
+        }
+
+        //Dev feature. Add bombs to inventory at will.
+        if(Input.GetKeyDown(KeyCode.F) && _devMode)
+        {
+            for (int i = 0; i < 7; i++)
+            {
+                IncreaseBombPoints();
             }
         }
 

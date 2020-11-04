@@ -3,7 +3,7 @@ using UnityEngine;
 
 public class Puddle : MonoBehaviour
 {
-    private List<Skeleton> _affectedSkeletons = new List<Skeleton>();
+    private List<Skeleton> _affectedSkeletons = new List<Skeleton>();    
 
     private void Start()
     {

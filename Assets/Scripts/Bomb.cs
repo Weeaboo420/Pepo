@@ -1,11 +1,14 @@
-﻿using UnityEngine;
+﻿using System.Collections.Generic;
+using UnityEngine;
 
 public class Bomb : MonoBehaviour
 {
     private GameManager _gameManagerReference;
     private int _hits = 0;
     private const int _maxHits = 3;
-    private bool _hasExploded = false;
+    private const float _explosionRadius = 3.9f; //The radius of the actual explosion
+    private const float _triggerRadius = 1.5f;  //The radius of the area around the bomb that will trigger an explosion
+    private const int _damage = 130;
 
     private void Start()
     {
@@ -13,25 +16,58 @@ public class Bomb : MonoBehaviour
         _gameManagerReference = FindObjectOfType<GameManager>();
     }
 
-    private void OnTriggerEnter2D(Collider2D collision)
+    private void Update()
     {
-        if(collision.CompareTag("Skeleton") && collision.isTrigger)
+        RaycastHit2D[] hits = Physics2D.BoxCastAll(transform.position, new Vector2(_triggerRadius, _triggerRadius), 0f, Vector2.zero);
+
+        if (hits.Length > 0)
         {
-            if(!_hasExploded)
+            
+            bool willExplode = false;
+
+            foreach (RaycastHit2D hit in hits)
             {
-                _hasExploded = true;
-                _gameManagerReference.IncreaseBombPoints();
+                if(hit.transform.CompareTag("Skeleton") && hit.collider.isTrigger)
+                {
+                    //We only need to determine if a skeleton has entered the trigger radius
+                    willExplode = true;
+                    break;
+                }
             }
 
-            //The bomb can only kill so many skeletons when it explodes.
-            if (_hits < _maxHits)
+            if (willExplode)
             {
-                collision.GetComponent<Skeleton>().TakeDamage(110);
-                _gameManagerReference.CreateExplosionPrefab(new Vector3(transform.position.x, transform.position.y, transform.position.z - 1f));
-                _hits++;
-            }            
+                List<Skeleton> hitSkeletons = new List<Skeleton>();
 
-            Destroy(this.gameObject);
+                RaycastHit2D[] explosionHits = Physics2D.BoxCastAll(transform.position, new Vector2(_explosionRadius, _explosionRadius), 0f, Vector2.zero);
+                foreach(RaycastHit2D hit in explosionHits)
+                {
+                    //Make sure that we only hit objects tagged with "Skeleton"
+                    if(hit.transform.CompareTag("Skeleton") && hit.collider.isTrigger && _hits < _maxHits)
+                    {
+                        //If there is a direct line of sight between the bomb and the skeleton
+                        if(Physics2D.Raycast(transform.position, (hit.transform.position - transform.position), _explosionRadius, LayerMask.GetMask("Skeleton")))
+                        {
+                            hitSkeletons.Add(hit.transform.GetComponent<Skeleton>());
+                            _hits++;
+                        }
+                    }
+
+                    if(_hits == _maxHits)
+                    {
+                        break;
+                    }
+                }
+
+                //Damage all the skeletons in range
+                foreach(Skeleton skeletonScript in hitSkeletons)
+                {
+                    skeletonScript.TakeDamage(_damage);
+                }
+
+                _gameManagerReference.CreateExplosionPrefab(new Vector3(transform.position.x, transform.position.y, transform.position.z - 1f));
+                Destroy(this.gameObject);
+            }
         }
     }
 }

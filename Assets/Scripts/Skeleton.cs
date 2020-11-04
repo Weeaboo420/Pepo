@@ -23,6 +23,7 @@ public class Skeleton : MonoBehaviour
     private float _previousSpeed;
     private bool _isSlowed = false;
     private const float _depthMultiplier = 0.075f;
+    private const float _slowedMultiplier = 0.35f;
     private Rigidbody2D _rigidbody2D;
     
     private int _nodeIndex = 0; //Used to determine which node on the path we are on
@@ -92,7 +93,7 @@ public class Skeleton : MonoBehaviour
         if (!_isSlowed && !_isSuperSkeleton)
         {
             _previousSpeed = _speed;
-            _speed = _speed * 0.58f;
+            _speed = _speed * _slowedMultiplier;
             _isSlowed = true;
         }
     }
