@@ -63,21 +63,21 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Scripts\Bomb.cs" />
-    <Compile Include="Assets\Scripts\CameraFollow.cs" />
-    <Compile Include="Assets\Scripts\DefaultSettings.cs" />
-    <Compile Include="Assets\Scripts\GameManager.cs" />
-    <Compile Include="Assets\Scripts\GuiManager.cs" />
-    <Compile Include="Assets\Scripts\Path.cs" />
-    <Compile Include="Assets\Scripts\PlayerController.cs" />
-    <Compile Include="Assets\Scripts\Puddle.cs" />
-    <Compile Include="Assets\Scripts\Pumpkin.cs" />
-    <Compile Include="Assets\Scripts\Scythe.cs" />
-    <Compile Include="Assets\Scripts\SelfDestruct.cs" />
-    <Compile Include="Assets\Scripts\Settings.cs" />
-    <Compile Include="Assets\Scripts\Skeleton.cs" />
-    <Compile Include="Assets\Scripts\SoundManager.cs" />
-    <Compile Include="Assets\Scripts\WaveParams.cs" />
+    <Compile Include="Assets\Scripts\Enemy\Skeleton.cs" />
+    <Compile Include="Assets\Scripts\Enemy\WaveParams.cs" />
+    <Compile Include="Assets\Scripts\Managers\GameManager.cs" />
+    <Compile Include="Assets\Scripts\Managers\GuiManager.cs" />
+    <Compile Include="Assets\Scripts\Managers\SoundManager.cs" />
+    <Compile Include="Assets\Scripts\Misc\DefaultSettings.cs" />
+    <Compile Include="Assets\Scripts\Misc\Path.cs" />
+    <Compile Include="Assets\Scripts\Misc\Pumpkin.cs" />
+    <Compile Include="Assets\Scripts\Misc\SelfDestruct.cs" />
+    <Compile Include="Assets\Scripts\Misc\Settings.cs" />
+    <Compile Include="Assets\Scripts\Player\Bomb.cs" />
+    <Compile Include="Assets\Scripts\Player\CameraFollow.cs" />
+    <Compile Include="Assets\Scripts\Player\PlayerController.cs" />
+    <Compile Include="Assets\Scripts\Player\Puddle.cs" />
+    <Compile Include="Assets\Scripts\Player\Scythe.cs" />
     <Reference Include="UnityEngine">
       <HintPath>C:/Program Files/Unity/Hub/Editor/2019.4.1f1/Editor/Data/Managed/UnityEngine/UnityEngine.dll</HintPath>
     </Reference>
