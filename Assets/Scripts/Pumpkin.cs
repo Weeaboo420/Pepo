@@ -140,7 +140,7 @@ public class Pumpkin : MonoBehaviour
             if (_spriteRenderer.sprite.name != "jack")
             {
                 _spriteRenderer.sprite = Resources.Load<Sprite>("Sprites/Level/jack");
-                _gameManagerReference.PlayLanternSound();
+                _gameManagerReference.PlayPumpkinSound();
             }            
         }
 

@@ -8505,6 +8505,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1499faf7d2629d042a6ea6fb4c7589bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _origin: 1
   pumpkin: {fileID: 551265395}
 --- !u!1 &256584782
 GameObject:
@@ -17046,6 +17047,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1499faf7d2629d042a6ea6fb4c7589bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _origin: 0
   pumpkin: {fileID: 2127304853}
 --- !u!1 &551265393
 GameObject:
@@ -22425,6 +22427,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1499faf7d2629d042a6ea6fb4c7589bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _origin: 0
   pumpkin: {fileID: 152626648}
 --- !u!1 &751753641
 GameObject:
@@ -25635,6 +25638,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1499faf7d2629d042a6ea6fb4c7589bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _origin: 1
   pumpkin: {fileID: 152626648}
 --- !u!1 &858004101
 GameObject:
@@ -31534,6 +31538,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1499faf7d2629d042a6ea6fb4c7589bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _origin: 2
   pumpkin: {fileID: 2127304853}
 --- !u!1 &1023952417
 GameObject:
@@ -32341,6 +32346,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1499faf7d2629d042a6ea6fb4c7589bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _origin: 2
   pumpkin: {fileID: 551265395}
 --- !u!1 &1041595056
 GameObject:
@@ -39088,6 +39094,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1499faf7d2629d042a6ea6fb4c7589bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _origin: 1
   pumpkin: {fileID: 2127304853}
 --- !u!1 &1227887509
 GameObject:
@@ -43871,6 +43878,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1499faf7d2629d042a6ea6fb4c7589bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _origin: 2
   pumpkin: {fileID: 152626648}
 --- !u!1 &1356711886
 GameObject:
@@ -61066,6 +61074,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1499faf7d2629d042a6ea6fb4c7589bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _origin: 0
   pumpkin: {fileID: 551265395}
 --- !u!1 &1897946393
 GameObject:
@@ -66472,6 +66481,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1499faf7d2629d042a6ea6fb4c7589bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _origin: 1
   pumpkin: {fileID: 152626648}
 --- !u!1 &2092453186
 GameObject:
@@ -67880,6 +67890,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1499faf7d2629d042a6ea6fb4c7589bd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  _origin: 2
   pumpkin: {fileID: 2127304853}
 --- !u!1 &2127304851
 GameObject:

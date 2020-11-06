@@ -20,6 +20,7 @@ public class Skeleton : MonoBehaviour
 
     private Vector2 _nextNode;
     private float _speed;
+    private bool _overrideSpeedChange = false;
     private float _previousSpeed;
     private bool _isSlowed = false;
     private const float _depthMultiplier = 0.075f;
@@ -78,8 +79,21 @@ public class Skeleton : MonoBehaviour
             transform.localScale = new Vector3(1.1f, 1.1f, 1f);
         }
 
+        _path.SetOriginValue(true);
+
         UpdateHealthBar();
         StartCoroutine(StartDelay());
+    }
+
+    public void SetSpeed(float speed) 
+    {
+        _speed = speed;
+        _overrideSpeedChange = true;
+    }
+
+    public bool IsSuperSkeleton()
+    {
+        return _isSuperSkeleton;
     }
 
     public void PlayFootstepSound()
@@ -111,15 +125,21 @@ public class Skeleton : MonoBehaviour
     private IEnumerator StartDelay()
     {
         
-        
+
         if (!_isSuperSkeleton)
         {
             yield return new WaitForSeconds(Random.Range(1f, 4f));
-            _speed = 2.75f;
+            if (!_overrideSpeedChange)
+            {
+                _speed = 2.75f;
+            }
         } else
         {
             yield return new WaitForSeconds(0.1f);
-            _speed = 1.8f;
+            if (!_overrideSpeedChange)
+            {
+                _speed = 1.8f;
+            }
         }
 
         _canMove = true;

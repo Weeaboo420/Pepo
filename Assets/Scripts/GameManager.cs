@@ -8,6 +8,9 @@ public class GameManager : MonoBehaviour
 {
     private const bool _devMode = false;
 
+    //Used to tell if skeletons are coming from 2 or more directions. This will be used for balancing.
+    private Dictionary<PathOrigin, bool> _skeletonDirections;
+
     private bool _paused = true;
     private bool _acceptsInput = false;
     private bool _hasStarted = false;
@@ -62,19 +65,6 @@ public class GameManager : MonoBehaviour
     private GameObject _splashPrefab;
     private Transform _wellTransform;
 
-    private AudioSource _bucketSoundSource;
-    private AudioClip[] _bucketRefillSounds;
-
-    private AudioSource[] _stepSoundSources;
-    private AudioClip[] _stepSounds;
-
-    private AudioSource _hitAudioSource;
-
-    private AudioSource[] _pumpkinSoundSources;
-    private AudioClip[] _jackLanternSpawnSounds;
-
-    private AudioSource _explosionAudioSource;
-
     private List<Path> _paths = new List<Path>();    
 
     private GameObject _dustPrefab;
@@ -92,6 +82,8 @@ public class GameManager : MonoBehaviour
     private GameObject _puddlePrefab;         
 
     private Scythe _scythe;
+
+    private SoundManager _soundManagerReference;
 
     private const int _countdownLength = 15;
     private float _nextWaveCountdown = _countdownLength;
@@ -117,6 +109,10 @@ public class GameManager : MonoBehaviour
     
     private void Awake()
     {
+        //Create the sound manager
+        GameObject soundManagerGameObject = new GameObject("Sound Manager");
+        _soundManagerReference = soundManagerGameObject.AddComponent<SoundManager>();
+
         //Add paths
         foreach(Transform child in transform)
         {
@@ -134,6 +130,13 @@ public class GameManager : MonoBehaviour
         {
             pcButtons.Add(button);
         }
+
+        _skeletonDirections = new Dictionary<PathOrigin, bool>() 
+        {
+            { PathOrigin.North, false },
+            { PathOrigin.West, false },
+            { PathOrigin.East, false }
+        };
 
         _settingsReference = FindObjectOfType<Settings>();
         _guiManagerReference = FindObjectOfType<GuiManager>();
@@ -213,76 +216,7 @@ public class GameManager : MonoBehaviour
 
         //Disable the red selection circle used for showing which pumpkin is selected for watering
         _selection.SetActive(false);
-
-        GameObject explosionSoundGameObject = new GameObject("audio_explosion");
-        _explosionAudioSource = explosionSoundGameObject.AddComponent<AudioSource>();
-        _explosionAudioSource.volume = 0.5f;
-        _explosionAudioSource.loop = false;
-        _explosionAudioSource.playOnAwake = false;
-        _explosionAudioSource.clip = Resources.Load<AudioClip>("SFX/bomb");
-
-        //Sounds for hits on skeletons
-        GameObject hitSoundGameObject = new GameObject("audio_hit_skeleton");
-        _hitAudioSource = hitSoundGameObject.AddComponent<AudioSource>();
-        _hitAudioSource.clip = Resources.Load<AudioClip>("SFX/hit");
-        _hitAudioSource.volume = 0.75f;
-        _hitAudioSource.playOnAwake = false;
-        _hitAudioSource.loop = false;
-
-        //Footstep sounds
-        _stepSoundSources = new AudioSource[4];
-        for(int i = 0; i < 4; i++)
-        {
-            GameObject stepSoundSourceGameObject = new GameObject("audio_step");
-            _stepSoundSources[i] = stepSoundSourceGameObject.AddComponent<AudioSource>();
-            _stepSoundSources[i].volume = 0.8f;
-            _stepSoundSources[i].playOnAwake = false;
-            _stepSoundSources[i].loop = false;
-        }
-
-        _stepSounds = new AudioClip[4]
-        {
-            Resources.Load<AudioClip>("SFX/Steps/step1"),
-            Resources.Load<AudioClip>("SFX/Steps/step2"),
-            Resources.Load<AudioClip>("SFX/Steps/step3"),
-            Resources.Load<AudioClip>("SFX/Steps/step4"),
-        };
-
-        //Sounds for the bucket
-        GameObject bucketSoundGameObject = new GameObject("audio_bucketRefill");
-        _bucketSoundSource = bucketSoundGameObject.AddComponent<AudioSource>();
-        _bucketSoundSource.loop = false;
-        _bucketSoundSource.playOnAwake = false;
-
-        _bucketRefillSounds = new AudioClip[3] 
-        { 
-            Resources.Load<AudioClip>("SFX/Splashes/splash01"),
-            Resources.Load<AudioClip>("SFX/Splashes/splash02"),
-            Resources.Load<AudioClip>("SFX/Splashes/splash03")
-        };
-
-        //Sounds for the pumpkins
-        _pumpkinSoundSources = new AudioSource[4];
-
-        for (int i = 0; i < 4; i++)
-        {
-            GameObject audioPumpkin = new GameObject("audio_pumpkin");
-            AudioSource pumpkinSoundSource = audioPumpkin.AddComponent<AudioSource>();
-            pumpkinSoundSource.playOnAwake = false;
-            pumpkinSoundSource.loop = false;
-
-
-            _jackLanternSpawnSounds = new AudioClip[4]
-            {
-            Resources.Load<AudioClip>("SFX/Spawn/spawn1"),
-            Resources.Load<AudioClip>("SFX/Spawn/spawn2"),
-            Resources.Load<AudioClip>("SFX/Spawn/spawn3"),
-            Resources.Load<AudioClip>("SFX/thud")
-            };
-
-            _pumpkinSoundSources[i] = pumpkinSoundSource;
-
-        }
+        
         foreach(Pumpkin pumpkin in FindObjectsOfType<Pumpkin>())
         {
             _lives++;
@@ -297,6 +231,26 @@ public class GameManager : MonoBehaviour
         _countdownGameObject.SetActive(false);
         UpdateLives();
         StartCoroutine(NewWave());
+    }
+
+    public void SetSkeletonDirection(PathOrigin origin, bool value)
+    {
+        _skeletonDirections[origin] = value;
+    }
+
+    //Are skeletons coming from more than 2 directions?
+    private bool ManyDirections()
+    {
+        foreach(PathOrigin origin in _skeletonDirections.Keys)
+        {
+            //If even one of the PathOrigins are set to false then return false
+            if(!_skeletonDirections[origin])
+            {
+                return false;
+            }            
+        }
+
+        return true;
     }
 
     public void UpdateDash(bool canDash)
@@ -445,7 +399,22 @@ public class GameManager : MonoBehaviour
         yield return new WaitForSeconds(1f);
         foreach (Skeleton skeletonScript in FindObjectsOfType<Skeleton>())
         {
-            _skeletonsInWave.Add(skeletonScript);
+            _skeletonsInWave.Add(skeletonScript);            
+        }
+
+        //Decrease the speed of all the skeletons if they are coming from more than 2 directions
+        if (ManyDirections())
+        {
+            foreach(Skeleton skeletonScript in _skeletonsInWave)
+            {
+                if (!skeletonScript.IsSuperSkeleton())
+                {
+                    skeletonScript.SetSpeed(2.25f); //Normal skeleton
+                } else
+                {
+                    skeletonScript.SetSpeed(1f); //Super skeleton
+                }
+            }
         }
 
         _waveActive = true;
@@ -518,9 +487,7 @@ public class GameManager : MonoBehaviour
     public void CreateHitPrefab(Vector3 position)
     {
         Instantiate(_hitPrefab, position, Quaternion.identity);
-
-        _hitAudioSource.volume = _settingsReference.GetSfxVolume("Hit");
-        _hitAudioSource.Play();
+        _soundManagerReference.PlayHitSound();
     }
 
     public void CreateExplosionPrefab(Vector3 position)
@@ -530,59 +497,22 @@ public class GameManager : MonoBehaviour
         Instantiate(_hitPrefab, position + new Vector3(-0.1f, 0f, 0f), Quaternion.identity);
         Instantiate(_hitPrefab, position + new Vector3(-0.15f, -0.2f, 0f), Quaternion.identity);
 
-        _explosionAudioSource.volume = _settingsReference.GetSfxVolume("Explosion");
-        _explosionAudioSource.Play();
+        _soundManagerReference.PlayExplosionSound();
     }
 
     public void PlayFootstepSound(bool forSkeleton = false)
     {
-        foreach (AudioSource stepSoundSource in _stepSoundSources)
-        {
-            if (!stepSoundSource.isPlaying)
-            {
-                stepSoundSource.clip = _stepSounds[Random.Range(0, _stepSounds.Length)];
-
-                if(forSkeleton)
-                {
-                    stepSoundSource.volume = _settingsReference.GetSfxVolume("Footstep_Skeleton");
-                } else
-                {
-                    stepSoundSource.volume = _settingsReference.GetSfxVolume("Footstep_Player");
-                }
-
-                stepSoundSource.Play();
-                break;
-            }
-        }
-
+        _soundManagerReference.PlayFootstepSound(forSkeleton);
     }
 
-    public void PlayLanternSound()
+    public void PlayPumpkinSound()
     {
-        foreach (AudioSource audioSource in _pumpkinSoundSources)
-        {
-            if (!audioSource.isPlaying)
-            {
-                audioSource.clip = _jackLanternSpawnSounds[Random.Range(0, _jackLanternSpawnSounds.Length - 1)];
-                audioSource.volume = _settingsReference.GetSfxVolume("Pumpkin");
-                audioSource.Play();
-                break;
-            }
-        }
+        _soundManagerReference.PlayPumpkinSound();
     }
 
     public void PlayThudSound()
-    {        
-        foreach (AudioSource audioSource in _pumpkinSoundSources)
-        {
-            if (!audioSource.isPlaying)
-            {
-                audioSource.clip = _jackLanternSpawnSounds[_jackLanternSpawnSounds.Length - 1];
-                audioSource.volume = _settingsReference.GetSfxVolume("Pumpkin");
-                audioSource.Play();
-                break;
-            }
-        }
+    {
+        _soundManagerReference.PlayThudSound();
     }
 
     public bool GetCanFillBucket()
@@ -667,9 +597,7 @@ public class GameManager : MonoBehaviour
             _bucketSlotImage.color = _emptyBucketSlotColor;
         }
 
-        _bucketSoundSource.clip = _bucketRefillSounds[Random.Range(0, _bucketRefillSounds.Length)];
-        _bucketSoundSource.volume = _settingsReference.GetSfxVolume("Splash");
-        _bucketSoundSource.Play();
+        _soundManagerReference.PlayBucketSound();
 
         _waterBucketFilled = filled;        
     }    
@@ -722,6 +650,15 @@ public class GameManager : MonoBehaviour
 
             if (activeSkeletons == 0)
             {
+
+                Dictionary<PathOrigin, bool> newSkeletonDiretions = new Dictionary<PathOrigin, bool>();
+                foreach(PathOrigin origin in _skeletonDirections.Keys)
+                {
+                    newSkeletonDiretions[origin] = false;
+                }
+
+                _skeletonDirections = newSkeletonDiretions;
+
                 _skeletonsInWave.Clear();
                 StartCoroutine(StartWaveDelay());
             }
@@ -814,7 +751,7 @@ public class GameManager : MonoBehaviour
 
         //Puddles
         if(Input.GetKeyDown(KeyCode.E) && _waterBucketFilled && _selectedPumpkin == null && !_canFillBucket ||
-            Input.GetButtonDown("A") && _waterBucketFilled && _selectedPumpkin == null && !_canFillBucket)
+        Input.GetButtonDown("A") && _waterBucketFilled && _selectedPumpkin == null && !_canFillBucket)
         {
             if (_acceptsInput)
             {
@@ -827,7 +764,7 @@ public class GameManager : MonoBehaviour
 
         //Pumpkin watering
         else if(Input.GetKeyDown(KeyCode.E) && _canWater && _selectedPumpkin != null && _waterBucketFilled && !_canFillBucket ||
-            Input.GetButtonDown("A") && _canWater && _selectedPumpkin != null && _waterBucketFilled && !_canFillBucket)
+        Input.GetButtonDown("A") && _canWater && _selectedPumpkin != null && _waterBucketFilled && !_canFillBucket)
         {
             if (_acceptsInput)
             {
@@ -847,7 +784,7 @@ public class GameManager : MonoBehaviour
 
         //Water bucket refill
         else if (Input.GetKeyDown(KeyCode.E) && _canFillBucket && !_waterBucketFilled ||
-            Input.GetButtonDown("A") && _canFillBucket && !_waterBucketFilled)
+        Input.GetButtonDown("A") && _canFillBucket && !_waterBucketFilled)
         {
             if (_acceptsInput)
             {
